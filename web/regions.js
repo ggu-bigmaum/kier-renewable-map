@@ -31,12 +31,11 @@
     options($('region-town'),district?children(district.id,'town'):[],'읍면동 전체');
     $('region-town').value=town?.id||'';
   }
-  function style(level,selected=false) {
-    return {color:selected?'#c27a13':level==='town'?'#5d7ca4':'#247864',weight:selected?3:level==='province'?2:1.3,fillColor:selected?'#e8ac3a':'#44866b',fillOpacity:selected?.13:0,bubblingMouseEvents:false};
+  function style(level) {
+    return {color:level==='town'?'#5d7ca4':'#247864',weight:level==='province'?2:1.3,fillColor:'#44866b',fillOpacity:0,bubblingMouseEvents:false};
   }
   function layer(features,level) {
     return L.geoJSON(features,{renderer:L.canvas({padding:.3}),style:()=>style(level),onEachFeature:(f,l)=>{
-      const tip=document.createElement('span');tip.textContent=f.properties.name;l.bindTooltip(tip,{sticky:true});
       l.on('click',e=>onSelect(e.latlng.lat,e.latlng.lng,f.properties.name+' · 지도 선택'));
     }});
   }

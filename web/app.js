@@ -23,9 +23,13 @@ let selected = catalog.find(d=>d.dataset_id==='wind_map'), point = null, map, ma
 const selectedIds=new Set(catalog.map(d=>d.dataset_id)), datasetSettings=new Map();
 const KIER_HQ = Object.freeze({lat:36.3899, lon:127.3647, zoom:12});
 const RESOLUTION_INFO = Object.freeze({
-  wind_map:'격자 2,134곳', wind_api:'175곳',
-  ghi_coms1:'격자 1,122곳', ghi_gk2a:'격자 2,784곳',
-  solar_api:'191곳', pv_forecast:'191곳', rt_radiation:'161곳'
+  wind_map:'약 6,900 m',
+  wind_api:'175개 지점',
+  ghi_coms1:'약 9,500 m',
+  ghi_gk2a:'약 6,000 m',
+  solar_api:'191개 지점',
+  pv_forecast:'191개 지점',
+  rt_radiation:'161개 관측소'
 });
 const PERIOD_INFO = Object.freeze({
   wind_map:'2011-01 ~ 12', wind_api:'날짜 구분 없음',
@@ -271,15 +275,31 @@ async function search(q) {
   const seq=++searchGeneration;
   $('search-results').replaceChildren(); $('search-message').textContent='';
   const parts=q.trim().split(/[,\s]+/);
+  // 1) Coordinates — drop pin and query immediately
   if(parts.length===2 && parts.every(x=>/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(x))) {
     const [lat,lon]=parts.map(Number);
     if(!validPoint(lat,lon)) { $('search-message').textContent='위도 -90~90, 경도 -180~180 범위로 입력하세요.'; return; }
     choosePoint(lat,lon,'좌표 검색 지점'); map?.setView([lat,lon],11); return;
   }
-  const local=places.filter(p=>p[0].includes(q.trim()));
+  // 2) Region search — auto-select first result (drops pin + queries); show rest as alternatives
   const regions=window.KierRegions?.search(q);
-  if(regions?.total) {showResults(regions.items); $('search-message').textContent=`${regions.total}건${regions.total>30?' (30건 표시)':''}`;return;}
-  if(local.length) { showResults(local.map(([label,lat,lon])=>({label,lat,lon}))); return; }
+  if(regions?.total) {
+    const first=regions.items[0];
+    if(first.regionId) window.KierRegions.select(first.regionId);
+    else if(first.lat!==undefined){choosePoint(Number(first.lat),Number(first.lon),first.label);map?.setView([Number(first.lat),Number(first.lon)],11);}
+    if(regions.items.length>1) showResults(regions.items.slice(1));
+    $('search-message').textContent=`${first.label} 선택됨${regions.total>1?` · 다른 결과 ${regions.total-1}건`:''}`;
+    return;
+  }
+  // 3) Local shortcuts (예: 서울, 대전…) — auto-select first
+  const local=places.filter(p=>p[0].includes(q.trim()));
+  if(local.length) {
+    const [label,lat,lon]=local[0];
+    choosePoint(lat,lon,label); map?.setView([lat,lon],11);
+    if(local.length>1) showResults(local.slice(1).map(([label,lat,lon])=>({label,lat,lon})));
+    $('search-message').textContent=`${label} 선택됨${local.length>1?` · 다른 결과 ${local.length-1}건`:''}`;
+    return;
+  }
   $('search-message').textContent='검색 결과 없음';
 }
 function showResults(items) {

@@ -28,6 +28,8 @@
     <select id="region-town" disabled><option></option></select>
     <p id="region-status"></p>
     <button id="region-retry" type="button"></button>
+    <input id="boundary-district" type="checkbox" checked>
+    <input id="boundary-town" type="checkbox" checked>
     <div id="single-dataset-row"><span id="result-dataset"></span><span id="result-item"></span></div>
     <div class="value-block">
       <span id="result-state"></span>
@@ -56,13 +58,6 @@
             <p id="search-message" class="feedback" role="status"></p>
             <ul id="search-results" class="search-results"></ul>
           </form>
-        </div>
-
-        <!-- Bottom-center boundary toggles -->
-        <div class="map-boundary-overlay">
-          <span class="bo-label">행정경계</span>
-          <label class="bo-chip"><input id="boundary-district" type="checkbox" checked> 시군구</label>
-          <label class="bo-chip"><input id="boundary-town" type="checkbox" checked> 읍면동</label>
         </div>
 
         <!-- Top-right result card -->
