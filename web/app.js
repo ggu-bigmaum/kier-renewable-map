@@ -54,15 +54,15 @@ const PERIOD_INFO = Object.freeze({
 });
 // Demo: show one representative month per dataset (within its available range).
 // The dashboard displays "임의의 날짜 YYYY-MM" below each value so users see the picked date.
-// Dataset color/ID palette for grid-point visualization
+// Dataset color palette for grid-point visualization (no ID mapping)
 const DATASET_META = Object.freeze({
-  solar_api:   {id:'D1', color:'#e8a033', res:'약 25 km'},
-  wind_api:    {id:'D2', color:'#0e7490', res:'약 25 km'},
-  pv_forecast: {id:'D3', color:'#d97706', res:'약 25 km'},
-  rt_radiation:{id:'D4', color:'#dc2626', res:'약 25 km'},
-  wind_map:    {id:'D5', color:'#2563eb', res:'약 20 km'},
-  ghi_coms1:   {id:'D6', color:'#7c3aed', res:'약 20 km'},
-  ghi_gk2a:    {id:'D7', color:'#9333ea', res:'약 20 km'}
+  solar_api:   {color:'#e8a033', res:'약 500 m'},
+  wind_api:    {color:'#0e7490', res:'약 100 m'},
+  pv_forecast: {color:'#d97706', res:'약 500 m'},
+  rt_radiation:{color:'#dc2626', res:'약 500 m'},
+  wind_map:    {color:'#2563eb', res:'약 1 km'},
+  ghi_coms1:   {color:'#7c3aed', res:'약 4 km'},
+  ghi_gk2a:    {color:'#9333ea', res:'약 2 km'}
 });
 const SUGGESTED_PERIOD = Object.freeze({
   solar_api:   {from:'2021-06', to:'2021-06'},
@@ -178,7 +178,17 @@ function renderRows(results=new Map()){
       value.append(gd);
     }
     const detail=document.createElement('td');detail.className='td-detail';
-    const link=document.createElement('a');link.href=d.source_url||'#';link.target='_blank';link.rel='noopener noreferrer';link.className='detail-link';link.textContent='상세조회';link.setAttribute('aria-label',`${d.name_ko} 상세조회`);
+    const link=document.createElement('a');
+    // 상세조회 → API 응답(JSON) 바로 보기
+    const suggestedForLink=SUGGESTED_PERIOD[d.dataset_id];
+    const metricForLink=settings(d).metric||d.metrics?.[0]?.metric||'';
+    const q=new URLSearchParams({dataset:d.dataset_id,lat:(point?.lat??KIER_HQ.lat).toFixed(5),lon:(point?.lon??KIER_HQ.lon).toFixed(5)});
+    if(metricForLink) q.set('metric',metricForLink);
+    if(suggestedForLink){q.set('from',suggestedForLink.from);q.set('to',suggestedForLink.to);}
+    link.href=new URL('point?'+q.toString(),API_BASE).toString();
+    link.target='_blank';link.rel='noopener noreferrer';link.className='detail-link';link.textContent='API 결과';
+    link.title='공공데이터포털 KIER API 응답(JSON) 바로 보기';
+    link.setAttribute('aria-label',`${d.name_ko} API 응답 보기`);
     detail.append(link);
     row.append(name,resolution,period,value,detail);return row;
   }));
@@ -448,14 +458,14 @@ async function refreshGridPoints() {
     const layer = L.layerGroup();
     for (const p of data.points || []) {
       const dot = L.circleMarker([p.lat, p.lon], {radius:5, color:'#fff', weight:1.5, fillColor:meta.color, fillOpacity:0.9, pane:'markerPane'});
-      dot.bindTooltip(`${meta.id} · ${d.name_ko}`, {direction:'top', offset:[0,-4], opacity:0.9});
+      dot.bindTooltip(d.name_ko, {direction:'top', offset:[0,-4], opacity:0.9});
       layer.addLayer(dot);
       if (point) {
         const km = havKm(point.lat, point.lon, p.lat, p.lon);
         const distStr = km < 1 ? `${Math.round(km*1000)} m` : `${km.toFixed(2)} km`;
         const label = L.divIcon({
           className: 'grid-label',
-          html: `<div class="gl-top" style="background:${meta.color}">${meta.id} · ${distStr}</div><div class="gl-bot">${meta.res} 격자</div>`,
+          html: `<div class="gl-top" style="background:${meta.color}">${distStr}</div><div class="gl-bot">${meta.res} 격자</div>`,
           iconSize: [null, null], iconAnchor: [0, -8]
         });
         layer.addLayer(L.marker([p.lat, p.lon], {icon:label, interactive:false, keyboard:false}));
