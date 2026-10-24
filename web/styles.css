@@ -32,6 +32,15 @@ main{display:block;height:100%;width:100%;position:relative;overflow:hidden;bord
 .map-search-overlay .search-results button{width:100%;text-align:left;border:0;border-bottom:1px solid #eef1ed;background:#fff;padding:11px 16px;font-size:12px;color:#203c38}
 .map-search-overlay .search-results li:last-child button{border-bottom:0}
 .map-search-overlay .search-results button:hover{background:#f4f8f1}
+.preset-row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.preset-btn{background:#fff;color:var(--green);border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;box-shadow:0 2px 6px #203c3812}
+.preset-btn:hover{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* Grid-point overlay */
+.grid-label{background:transparent;border:0;pointer-events:none;white-space:nowrap}
+.gl-top{display:inline-block;color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;line-height:1.2;font-variant-numeric:tabular-nums;box-shadow:0 1px 3px #203c3833}
+.gl-bot{display:inline-block;margin-top:1px;padding:1px 4px;background:#ffffffee;border:1px solid #d0d8d3;color:#536d60;font-size:8px;line-height:1.2;border-radius:3px}
+.leaflet-tooltip{font-size:11px}
 
 /* Top-right result card */
 .result{position:absolute;z-index:600;top:16px;right:16px;width:340px;max-width:calc(100% - 32px);max-height:calc(100% - 110px);overflow:auto;margin:0;padding:16px 18px;background:#fff;border:1px solid #d7e3db;border-radius:10px;box-shadow:0 6px 26px #203c3820}

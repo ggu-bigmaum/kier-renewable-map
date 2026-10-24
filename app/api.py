@@ -410,6 +410,51 @@ def api_point():
         conn.close()
 
 
+@app.get("/api/grid_points")
+def api_grid_points():
+    """데이터셋에 적재된 격자점(지점) 좌표 목록. 선택 bbox 안의 고유 (lat,lon) 반환.
+    쿼리: dataset=<id>  (필수)
+          bbox=lat1,lon1,lat2,lon2  (선택: 서남-동북 좌표. 생략 시 전체)
+          limit=<int>  (기본 2000, 최대 10000)
+    """
+    dataset_id = request.args.get("dataset")
+    if not dataset_id:
+        return err("dataset 이 필요합니다")
+    bbox = request.args.get("bbox")
+    try:
+        limit = max(1, min(10000, int(request.args.get("limit", "2000"))))
+    except ValueError:
+        return err("limit 은 정수")
+    lat1 = lon1 = lat2 = lon2 = None
+    if bbox:
+        try:
+            parts = [float(x) for x in bbox.split(",")]
+            if len(parts) != 4:
+                raise ValueError
+            lat1, lon1, lat2, lon2 = parts
+            lat1, lat2 = min(lat1, lat2), max(lat1, lat2)
+            lon1, lon2 = min(lon1, lon2), max(lon1, lon2)
+        except ValueError:
+            return err("bbox 는 'lat1,lon1,lat2,lon2'")
+    conn = connect()
+    try:
+        with conn.cursor() as cur:
+            metas = {m["dataset"]: m for m in dataset_meta(cur)}
+            if dataset_id not in metas:
+                return err(f"알 수 없는 dataset: {dataset_id}", 404)
+            table = "kier_static_value" if metas[dataset_id].get("static") else "kier_point_value"
+            if bbox:
+                sql = f"SELECT DISTINCT lat, lon FROM {table} WHERE dataset_id=%s AND lat BETWEEN %s AND %s AND lon BETWEEN %s AND %s LIMIT %s"
+                cur.execute(sql, (dataset_id, lat1, lat2, lon1, lon2, limit))
+            else:
+                sql = f"SELECT DISTINCT lat, lon FROM {table} WHERE dataset_id=%s LIMIT %s"
+                cur.execute(sql, (dataset_id, limit))
+            pts = [{"lat": float(r["lat"]), "lon": float(r["lon"])} for r in cur.fetchall()]
+            return jsonify(dataset=dataset_id, count=len(pts), limit=limit, bbox=bbox, points=pts)
+    finally:
+        conn.close()
+
+
 @app.get("/api/summary")
 def api_summary():
     lat, lon, e = parse_coord()

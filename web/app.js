@@ -43,6 +43,16 @@ const PERIOD_INFO = Object.freeze({
 });
 // Demo: show one representative month per dataset (within its available range).
 // The dashboard displays "임의의 날짜 YYYY-MM" below each value so users see the picked date.
+// Dataset color/ID palette for grid-point visualization
+const DATASET_META = Object.freeze({
+  solar_api:   {id:'D1', color:'#e8a033', res:'약 25 km'},
+  wind_api:    {id:'D2', color:'#0e7490', res:'약 25 km'},
+  pv_forecast: {id:'D3', color:'#d97706', res:'약 25 km'},
+  rt_radiation:{id:'D4', color:'#dc2626', res:'약 25 km'},
+  wind_map:    {id:'D5', color:'#2563eb', res:'약 20 km'},
+  ghi_coms1:   {id:'D6', color:'#7c3aed', res:'약 20 km'},
+  ghi_gk2a:    {id:'D7', color:'#9333ea', res:'약 20 km'}
+});
 const SUGGESTED_PERIOD = Object.freeze({
   solar_api:   {from:'2021-06', to:'2021-06'},
   wind_api:    null,
@@ -56,6 +66,7 @@ let sharedPeriod=null,lastPeriod=null;
 const singleValue = d => d.display?.value_mode==='single';
 const ready = d => ['ready','demo'].includes(d.status) && (singleValue(d) || d.metrics.length > 0);
 const validPoint = (lat,lon) => Number.isFinite(lat) && Number.isFinite(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
+function havKm(lat1,lon1,lat2,lon2){const R=6371,p=Math.PI/180,a=0.5-Math.cos((lat2-lat1)*p)/2+Math.cos(lat1*p)*Math.cos(lat2*p)*(1-Math.cos((lon2-lon1)*p))/2;return 2*R*Math.asin(Math.sqrt(a));}
 // User-approved display labels. Raw API/DB metadata and numeric values remain unchanged.
 // rt_radiation: W/m² is user-specified; this API's provider documentation does not confirm it.
 const USER_UNIT_LABELS=Object.freeze({wind_api:'배',rt_radiation:'W/m²'});
@@ -269,6 +280,10 @@ function initMap() {
   const tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
   tiles.on('tileerror',()=>{$('map-error').hidden=false;});
   map.on('click',e=>choosePoint(e.latlng.lat,e.latlng.lng));
+  let gridRefreshTimer=null;
+  const scheduleGridRefresh=()=>{clearTimeout(gridRefreshTimer);gridRefreshTimer=setTimeout(refreshGridPoints,300);};
+  map.on('moveend',scheduleGridRefresh);
+  map.on('zoomend',scheduleGridRefresh);
   // Leaflet bottomleft stacks newer controls on top. Add in order: cursor coords, scale, minimap
   // so visual stack from top to bottom = minimap, scale, cursor coords.
   const CursorCoords=L.Control.extend({
@@ -401,6 +416,42 @@ if($('toggle-map-tools')){
     $('toggle-map-tools').setAttribute('aria-pressed',String(hidden));
   });
 }
+// Grid-point overlay: fetch per-dataset grid locations within current bounds and draw as colored dots with 2-line labels
+const gridLayers = new Map();
+let gridGeneration = 0;
+async function refreshGridPoints() {
+  if (!map || !window.L) return;
+  const b = map.getBounds();
+  const bbox = `${b.getSouth().toFixed(4)},${b.getWest().toFixed(4)},${b.getNorth().toFixed(4)},${b.getEast().toFixed(4)}`;
+  const seq = ++gridGeneration;
+  await Promise.all(catalog.map(async d => {
+    const meta = DATASET_META[d.dataset_id]; if (!meta) return;
+    let data;
+    try { data = await api(`grid_points?dataset=${d.dataset_id}&bbox=${bbox}&limit=400`); }
+    catch { return; }
+    if (seq !== gridGeneration) return;
+    const prev = gridLayers.get(d.dataset_id);
+    if (prev) map.removeLayer(prev);
+    const layer = L.layerGroup();
+    for (const p of data.points || []) {
+      const dot = L.circleMarker([p.lat, p.lon], {radius:5, color:'#fff', weight:1.5, fillColor:meta.color, fillOpacity:0.9, pane:'markerPane'});
+      dot.bindTooltip(`${meta.id} · ${d.name_ko}`, {direction:'top', offset:[0,-4], opacity:0.9});
+      layer.addLayer(dot);
+      if (point) {
+        const km = havKm(point.lat, point.lon, p.lat, p.lon);
+        const distStr = km < 1 ? `${Math.round(km*1000)} m` : `${km.toFixed(2)} km`;
+        const label = L.divIcon({
+          className: 'grid-label',
+          html: `<div class="gl-top" style="background:${meta.color}">${meta.id} · ${distStr}</div><div class="gl-bot">${meta.res} 격자</div>`,
+          iconSize: [null, null], iconAnchor: [0, -8]
+        });
+        layer.addLayer(L.marker([p.lat, p.lon], {icon:label, interactive:false, keyboard:false}));
+      }
+    }
+    layer.addTo(map);
+    gridLayers.set(d.dataset_id, layer);
+  }));
+}
 $('toggle-dashboard').addEventListener('click',()=>{
   const result=document.querySelector('.result');
   const collapsed=result.classList.toggle('collapsed');
@@ -408,6 +459,12 @@ $('toggle-dashboard').addEventListener('click',()=>{
   btn.setAttribute('aria-expanded',String(!collapsed));
   btn.querySelector('.dash-label').textContent=collapsed?'대시보드 보기':'대시보드 접기';
 });
+// KIER preset button: jump to KIER HQ
+$('preset-kier')?.addEventListener('click', ()=>{
+  choosePoint(KIER_HQ.lat, KIER_HQ.lon, '한국에너지기술연구원');
+  map?.setView([KIER_HQ.lat, KIER_HQ.lon], KIER_HQ.zoom);
+});
 selectDataset(selected); initMap(); loadCatalog();
-// Default pin: KIER Daejeon HQ
-choosePoint(KIER_HQ.lat, KIER_HQ.lon, 'KIER 대전 본원');
+// Default pin: KIER Daejeon HQ + grid overlay
+choosePoint(KIER_HQ.lat, KIER_HQ.lon, '한국에너지기술연구원');
+setTimeout(refreshGridPoints, 500);
