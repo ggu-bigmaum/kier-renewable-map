@@ -13,6 +13,7 @@ const catalog = [
   ['ghi_gk2a','천리안2호 수평면전일사량','file','15066438']
 ].map(([dataset_id,name_ko,kind,id]) => ({dataset_id,name_ko,kind,status:'not_started',metrics:[],periods:[],source_url:`https://www.data.go.kr/${kind==='file'?`data/${id}/fileData.do`:`tcs/dss/selectApiDataDetailView.do?publicDataPk=${id}`}`}));
 const places = [
+  ['한국에너지기술연구원',36.3827,127.3583],['KIER',36.3827,127.3583],['에너지기술연구원',36.3827,127.3583],['KIER 본원',36.3827,127.3583],
   ['서울',37.5665,126.9780],['대전',36.3504,127.3845],['제주',33.4996,126.5312],
   ['부산',35.1796,129.0756],['대구',35.8714,128.6014],['인천',37.4563,126.7052],
   ['광주',35.1595,126.8526],['울산',35.5384,129.3114],['세종',36.4800,127.2890],
