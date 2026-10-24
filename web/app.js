@@ -315,11 +315,13 @@ $('select-all').addEventListener('change',e=>{saveSettings();selectedIds.clear()
 $('reset-map').addEventListener('click',()=>map?.setView([36.2,127.8],7));
 $('zoom-in').addEventListener('click',()=>map?.zoomIn());
 $('zoom-out').addEventListener('click',()=>map?.zoomOut());
-$('toggle-map-tools').addEventListener('click',()=>{
-  const hidden=document.querySelector('.map-wrap').classList.toggle('map-ui-hidden');
-  $('toggle-map-tools').textContent=hidden?'지도 메뉴 보이기':'지도 메뉴 숨기기';
-  $('toggle-map-tools').setAttribute('aria-pressed',String(hidden));
-});
+if($('toggle-map-tools')){
+  $('toggle-map-tools').addEventListener('click',()=>{
+    const hidden=document.querySelector('.map-wrap').classList.toggle('map-ui-hidden');
+    $('toggle-map-tools').textContent=hidden?'지도 메뉴 보이기':'지도 메뉴 숨기기';
+    $('toggle-map-tools').setAttribute('aria-pressed',String(hidden));
+  });
+}
 $('toggle-dashboard').addEventListener('click',()=>{
   const result=document.querySelector('.result');
   const collapsed=result.classList.toggle('collapsed');

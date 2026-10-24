@@ -119,7 +119,92 @@ main{display:grid;grid-template-columns:var(--sidebar-width) minmax(0,1fr);heigh
 .workspace .result.multiple .result-top{order:-2}
 .workspace .result.multiple .multi-results{order:-1;margin:10px 0 0}
 
-/* ==== Redesign: SOLARMAP-style layout (top search, narrow sidebar, right-top card with dashboard toggle) ==== */
+/* ==== Redesign v2: no header, sidebar brand, map-overlay search, sidebar map-tools ==== */
+:root{--sidebar-width:240px;--header-height:0px}
+body{height:100dvh;overflow:hidden}
+.header{display:none}
+main{display:grid;grid-template-columns:var(--sidebar-width) minmax(0,1fr);height:100dvh;width:100%;max-width:none;margin:0;overflow:hidden}
+.sidebar{height:100%;min-height:0;overflow:auto;padding:0;border-right:1px solid var(--border);background:#fff;scrollbar-width:thin;display:flex;flex-direction:column}
+.sidebar-head{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);min-height:52px}
+.sidebar .brand{text-decoration:none;display:flex;align-items:center;gap:10px;font-size:18px;font-weight:800;letter-spacing:-.5px;color:#203c38}
+.sidebar .brand-mark{width:30px;height:30px;display:grid;place-items:center;background:var(--green);color:#fff;border-radius:8px 2px;font-size:17px}
+.sidebar .brand-text{font-weight:800}
+.sidebar section{padding:14px 16px;border-top:1px solid var(--border)}
+.sidebar section:first-of-type,.sidebar .data-section{border-top:0}
+.sidebar section h2{font-size:12px;font-weight:700;color:#203c38;margin:0 0 10px;display:flex;align-items:center;gap:9px}
+.sidebar .select-all{margin-left:auto;font-size:10px;color:#657b71;font-weight:500}
+
+/* compact dataset list: no icon, one line, status small */
+.datasets{display:flex;flex-direction:column;gap:4px}
+.dataset{width:100%;display:flex;align-items:center;gap:8px;text-align:left;padding:7px 9px;border:1px solid #eef1ed;background:#fff;border-radius:5px;font-size:11px;line-height:1.3;color:#203c38}
+.dataset[aria-pressed=true]{border-color:#41836a;background:#f1f8f3}
+.dataset-icon{display:none}
+.dataset-text{flex:1;font-size:11px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dataset-status{font-size:9px;color:#a4b1a9;font-weight:400;white-space:nowrap}
+.dataset-check{width:12px;flex-shrink:0;color:var(--green);font-size:12px;font-weight:700;text-align:right}
+
+/* hide '설정할 데이터' and '제공 항목' controls */
+.hidden-label,.hidden-select,#filter-dataset-label,#filter-dataset,#metric-label,#metric,#extra-filters{display:none!important}
+
+/* period controls shown */
+#dataset-filters{display:block}
+.period-range{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0}
+.period-range label{font-size:10px;margin-bottom:4px}
+.period-range select{padding:7px 8px;font-size:11px}
+
+/* region picker tightened */
+.location-controls{margin:0;border:1px solid var(--border);border-radius:6px}
+.location-controls>summary{padding:8px 10px;font-size:11px;font-weight:600;min-height:auto}
+.location-controls-body{padding:4px 10px 10px}
+.region-picker{margin:0;padding:0;border:0}
+.region-picker label{font-size:10px;margin:8px 0 3px}
+.region-picker select{padding:7px 8px;font-size:11px;min-height:auto}
+
+/* sidebar map tools section */
+.sidebar-footer-tools{margin-top:auto;background:#fafbf9}
+.sidebar-footer-tools .map-tools{display:flex;flex-direction:column;gap:8px;position:static;padding:0;background:transparent;border:0;box-shadow:none;width:100%;max-width:none}
+.sidebar-footer-tools .map-zoom{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.sidebar-footer-tools .map-zoom button{min-height:34px;font-size:16px;padding:3px}
+.sidebar-footer-tools .boundary-controls{display:flex;flex-direction:column;gap:4px;padding:8px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);font-size:11px}
+.sidebar-footer-tools .boundary-controls>span{font-size:10px;color:#71817d;margin-bottom:3px}
+.sidebar-footer-tools .boundary-controls label{display:flex;align-items:center;gap:6px;margin:0;font-size:11px;min-height:24px;color:#203c38;cursor:pointer}
+.sidebar-footer-tools .boundary-controls input{width:14px;height:14px;margin:0;accent-color:var(--green)}
+.sidebar-footer-tools #reset-map{width:100%;padding:8px;font-size:11px;background:#fff;border:1px solid var(--border)}
+
+/* map area: full right, search as overlay, no header */
+.workspace{position:relative;height:100%;min-height:0;overflow:hidden;padding:0}
+.workspace .map-wrap{width:100%;height:100%;border:0;border-radius:0;position:relative}
+#map{height:100%;width:100%;background:#e7eee7;z-index:0}
+
+/* map search overlay (top-center) */
+.map-search-overlay{position:absolute;z-index:600;top:14px;left:50%;transform:translateX(-50%);width:min(520px,calc(100% - 420px))}
+.map-search-overlay form{margin:0;position:relative}
+.map-search-overlay .search-row{display:flex;gap:0;background:#fff;border:1px solid var(--border);border-radius:999px;padding:4px;align-items:center;box-shadow:0 4px 14px #203c3818}
+.map-search-overlay input{border:0;background:transparent;padding:9px 16px;font-size:13px;flex:1;min-width:0}
+.map-search-overlay input:focus{outline:none}
+.map-search-overlay button[type=submit]{background:var(--green);color:#fff;border:0;border-radius:999px;padding:8px 20px;font-size:12px;font-weight:600;white-space:nowrap;min-height:0}
+.map-search-overlay .feedback{position:absolute;left:16px;right:16px;top:calc(100% + 4px);margin:0;padding:6px 10px;background:#fff8e8;border:1px solid #e0cc95;border-radius:6px;font-size:11px;z-index:900}
+.map-search-overlay .feedback:empty{display:none}
+.map-search-overlay .search-results{position:absolute;left:0;right:0;top:calc(100% + 6px);margin:0;padding:0;list-style:none;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px #203c381c;max-height:340px;overflow:auto;z-index:900}
+.map-search-overlay .search-results:empty{display:none}
+.map-search-overlay .search-results li{padding:0}
+.map-search-overlay .search-results button{width:100%;text-align:left;border:0;border-bottom:1px solid #eef1ed;background:#fff;padding:11px 16px;border-radius:0;min-height:auto;font-size:12px;margin:0}
+.map-search-overlay .search-results li:last-child button{border-bottom:0}
+.map-search-overlay .search-results button:hover{background:#f4f8f1}
+
+/* keep result card top-right */
+.workspace .result{position:absolute;z-index:600;left:auto;right:16px;top:16px;bottom:auto;width:320px;max-width:calc(100% - 32px);max-height:calc(100% - 32px);overflow:auto;margin:0;padding:16px 18px;background:#fff;border:1px solid #d7e3db;border-radius:10px;box-shadow:0 6px 26px #203c3820}
+.workspace .result:not(.collapsed){width:360px}
+
+/* legacy: map-tools inside .map-wrap is now hidden since it was moved to sidebar */
+.workspace .map-wrap>.map-tools{display:none}
+.workspace #boundary-error{position:absolute;z-index:650;top:70px;left:16px;margin:0;padding:8px;background:#fff8e8;max-width:300px}
+.workspace .leaflet-bottom.leaflet-right{bottom:20px}
+
+@media(max-width:1050px){:root{--sidebar-width:220px}.map-search-overlay{width:min(400px,calc(100% - 380px))}.workspace .result{width:280px}.workspace .result:not(.collapsed){width:310px}}
+@media(max-width:650px){:root{--sidebar-width:100%}main{display:grid;grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}.sidebar{height:auto;max-height:40vh;border-right:0;border-bottom:1px solid var(--border)}.sidebar-footer-tools{display:none}.map-search-overlay{width:calc(100% - 32px);left:16px;transform:none;top:12px}.workspace .result{right:12px;top:70px;width:calc(100% - 24px)}.workspace .result:not(.collapsed){width:calc(100% - 24px)}}
+
+/* ==== (keeping old overrides below) ==== */
 :root{--sidebar-width:260px}
 .header{grid-template-columns:230px minmax(0,1fr) auto}
 .header .brand{padding:0 16px;font-size:20px;letter-spacing:-.5px}
