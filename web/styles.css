@@ -44,7 +44,7 @@ main{display:block;height:100%;width:100%;position:relative;overflow:hidden;bord
 
 /* Top-right result card */
 .result{position:absolute;z-index:600;top:16px;right:16px;width:340px;max-width:calc(100% - 32px);max-height:calc(100% - 110px);overflow:auto;margin:0;padding:16px 18px;background:#fff;border:1px solid #d7e3db;border-radius:10px;box-shadow:0 6px 26px #203c3820}
-.result:not(.collapsed){width:555px}
+.result:not(.collapsed){width:640px}
 .result-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .result-head-main{min-width:0;flex:1}
 .result-head-main .eyebrow{display:block;font-size:10px;color:#7b8d84;letter-spacing:1.4px;margin:0 0 8px;font-weight:700}
@@ -63,23 +63,23 @@ main{display:block;height:100%;width:100%;position:relative;overflow:hidden;bord
 .period-range label{display:block;font-size:10px;color:#657b71;margin-bottom:3px}
 .period-range select{width:100%;padding:7px 8px;font-size:11px;background:#fff;border:1px solid #cfdcd3;border-radius:6px;color:#203c38}
 
-/* Multi-result table (1.2x spacing) */
+/* Multi-result table (single-line rows) */
 .multi-results{overflow:auto;max-width:100%}
-.multi-results table{width:100%;border-collapse:collapse;font-size:12px;table-layout:auto}
+.multi-results table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
 .multi-results thead th{position:sticky;top:0;background:#eff5f1;padding:10px 8px;font-size:11px;font-weight:600;color:#657b71;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
-.multi-results thead th.th-detail{text-align:center}
-.multi-results tbody th{padding:11px 8px;font-size:12px;font-weight:600;color:#203c38;border-bottom:1px solid #eef1ed;text-align:left;vertical-align:top}
-.multi-results tbody td{padding:11px 8px;font-size:12px;color:#536d60;border-bottom:1px solid #eef1ed;vertical-align:top;line-height:1.6}
-.multi-results td.result-number{text-align:right;font-size:14px;color:#205e46;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.multi-results thead th:nth-child(1){width:34%}
+.multi-results thead th:nth-child(2){width:14%}
+.multi-results thead th:nth-child(3){width:19%}
+.multi-results thead th:nth-child(4){width:21%;text-align:right}
+.multi-results thead th:nth-child(5){width:12%;text-align:center}
+.multi-results tbody th{padding:11px 8px;font-size:11px;font-weight:600;color:#203c38;border-bottom:1px solid #eef1ed;text-align:left;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.multi-results tbody td{padding:11px 8px;font-size:11px;color:#536d60;border-bottom:1px solid #eef1ed;vertical-align:middle;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.multi-results td.result-number{text-align:right;font-size:13px;color:#205e46;font-weight:700;font-variant-numeric:tabular-nums}
 .multi-results td.result-number .num{display:inline}
 .multi-results td.result-number .unit{display:inline;font-size:10px;color:#71817d;font-weight:500;margin-left:3px}
 .multi-results td.td-detail{text-align:center;padding:8px 6px;vertical-align:middle}
-.multi-results .detail-link{display:inline-block;padding:6px 10px;background:#f3f6f4;color:var(--green);border:1px solid var(--border);border-radius:5px;font-size:10px;font-weight:600;text-decoration:none;white-space:nowrap}
+.multi-results .detail-link{display:inline-block;padding:5px 9px;background:#f3f6f4;color:var(--green);border:1px solid var(--border);border-radius:5px;font-size:10px;font-weight:600;text-decoration:none;white-space:nowrap}
 .multi-results .detail-link:hover{background:var(--green);color:#fff;border-color:var(--green)}
-.multi-results tbody small{display:block;margin-top:2px;font-size:10px;color:var(--muted);font-weight:400}
-.multi-results .row-status{color:#936b28;font-size:11px}
-.multi-results .date-note{display:block;margin-top:2px;font-size:9px;color:#8b9890;font-weight:400;text-align:right}
-.multi-results .grid-dist-note{display:block;margin-top:1px;font-size:9px;color:#9a8b4e;font-weight:400;text-align:right;cursor:help}
 .dashboard-period{display:none}
 
 .result-message{margin:10px 0 0;font-size:10px;color:#7d8d80;line-height:1.6}

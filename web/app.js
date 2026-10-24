@@ -163,32 +163,15 @@ function renderRows(results=new Map()){
     const period=document.createElement('td');period.textContent=PERIOD_INFO[d.dataset_id]||'—';
     const value=document.createElement('td');value.className='result-number';
     const dummy=DUMMY_VALUE[d.dataset_id];
-    const effVal=result?.value ?? dummy?.value ?? (result?.status?'':'—');
+    const effVal=result?.value ?? dummy?.value ?? '—';
     const effUnit=result?.unit||dummy?.unit||unitLabel(d.dataset_id,d.metrics?.[0]?.unit||'');
     const num=document.createElement('span');num.className='num';num.textContent=effVal;value.append(num);
     if(effUnit && effVal && effVal!=='—'){const u=document.createElement('small');u.className='unit';u.textContent=' '+effUnit;value.append(u);}
-    if(result?.status && !result?.value){const status=document.createElement('small');status.className='row-status';status.textContent=result.status;value.append(status);}
-    const suggested=SUGGESTED_PERIOD[d.dataset_id];
-    if(suggested && effVal && effVal!=='—'){const dn=document.createElement('small');dn.className='date-note';dn.textContent=`임의의 날짜 ${suggested.from}`;value.append(dn);}
-    if(typeof result?.distance_km==='number'){
-      const gd=document.createElement('small');gd.className='grid-dist-note';
-      const km=result.distance_km;
-      gd.textContent=`대표 격자점 ${km<1?Math.round(km*1000)+' m':km.toFixed(2)+' km'} 거리`;
-      if(result.grid_point) gd.title=`격자점 좌표: ${result.grid_point.lat.toFixed(5)}, ${result.grid_point.lon.toFixed(5)}`;
-      value.append(gd);
-    }
     const detail=document.createElement('td');detail.className='td-detail';
     const link=document.createElement('a');
-    // 상세조회 → API 응답(JSON) 바로 보기
-    const suggestedForLink=SUGGESTED_PERIOD[d.dataset_id];
-    const metricForLink=settings(d).metric||d.metrics?.[0]?.metric||'';
-    const q=new URLSearchParams({dataset:d.dataset_id,lat:(point?.lat??KIER_HQ.lat).toFixed(5),lon:(point?.lon??KIER_HQ.lon).toFixed(5)});
-    if(metricForLink) q.set('metric',metricForLink);
-    if(suggestedForLink){q.set('from',suggestedForLink.from);q.set('to',suggestedForLink.to);}
-    link.href=new URL('point?'+q.toString(),API_BASE).toString();
-    link.target='_blank';link.rel='noopener noreferrer';link.className='detail-link';link.textContent='API 결과';
-    link.title='공공데이터포털 KIER API 응답(JSON) 바로 보기';
-    link.setAttribute('aria-label',`${d.name_ko} API 응답 보기`);
+    link.href=d.source_url||'#';link.target='_blank';link.rel='noopener noreferrer';link.className='detail-link';link.textContent='API 소개';
+    link.title='공공데이터포털에서 이 API 소개 페이지 열기';
+    link.setAttribute('aria-label',`${d.name_ko} API 소개 페이지`);
     detail.append(link);
     row.append(name,resolution,period,value,detail);return row;
   }));
