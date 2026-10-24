@@ -1,0 +1,30 @@
+# 비밀·접속정보
+info.txt
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets*
+
+# 로컬 DB·작업 이력
+*.sqlite3
+*.sqlite3-*
+
+# 대용량·원자료·수집 산출물
+downloads_raw/
+collect/out/
+logs/
+db/backup/
+_pkg/
+
+# 빌드·캐시
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+*.bak*
+*.tmp
+.claude/
+.DS_Store

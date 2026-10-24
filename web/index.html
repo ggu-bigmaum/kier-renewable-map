@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="kier-api-base" content="http://127.0.0.1:5056/api/">
+  <meta name="theme-color" content="#123d38"><title>KIER 재생에너지 통합조회</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script defer src="region-geometry.js"></script>
+  <script defer src="regions.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="header"><a class="brand" href="./"><span class="brand-mark">K</span><span>KIER <small>재생에너지 통합조회</small></span></a><div class="map-heading"><span class="eyebrow">RESOURCE MAP</span><h1 id="map-title">풍력자원지도</h1></div><button id="toggle-map-tools" class="toggle-map-tools" type="button" aria-pressed="false">지도 메뉴 숨기기</button></header>
+  <main>
+    <aside class="sidebar" aria-label="조회 조건">
+      <section class="data-section"><h2><span class="step">01</span> 데이터 선택 <label class="select-all"><input id="select-all" type="checkbox"> 전체 선택</label></h2><div id="datasets" class="datasets"></div></section>
+      <section><h2><span class="step">02</span> 항목 및 기준 기간</h2><label id="filter-dataset-label" for="filter-dataset">설정할 데이터</label><select id="filter-dataset"></select><div id="dataset-filters"><label id="metric-label" for="metric">제공 항목 · 허브 높이</label><select id="metric" disabled><option value="">제공 항목 준비 중</option></select><div id="extra-filters"></div><div id="period-controls" class="period-range"><div><label for="period">시작 월</label><select id="period" disabled></select></div><div><label for="period-to">종료 월</label><select id="period-to" disabled></select></div></div></div></section>
+      <section class="location-section"><h2><span class="step">03</span> 위치 찾기</h2>
+        <form id="search-form"><label for="search">행정구역명 · 행정코드 또는 위도, 경도</label><div class="search-row"><input id="search" autocomplete="off" placeholder="유성구 온천1동 또는 36.35, 127.38" required maxlength="150"><button type="submit">검색</button></div></form>
+        <p id="search-message" class="feedback" role="status"></p><ul id="search-results" class="search-results"></ul>
+        <details id="location-controls" class="location-controls"><summary>상세 필터 <span class="when-open">접기</span><span class="when-closed">펼치기</span></summary><div class="location-controls-body">
+        <div class="region-picker"><label for="region-province">시도</label><select id="region-province" disabled><option>불러오는 중</option></select><label for="region-district">시군구</label><select id="region-district" disabled><option value="">시도를 먼저 선택하세요</option></select><label for="region-town">읍면동 (행정동)</label><select id="region-town" disabled><option value="">시군구를 먼저 선택하세요</option></select><p id="region-status" class="hint" role="status"></p><button id="region-retry" type="button" hidden>경계 데이터 다시 시도</button></div>
+        </div></details>
+      </section>
+    </aside>
+    <div class="workspace">
+      <p id="boundary-error" class="feedback" role="alert" hidden></p>
+      <div class="map-wrap"><div id="map" aria-label="지점 선택 지도"></div><div id="map-error" role="alert" hidden>지도 연결 오류</div><div class="map-tools" role="group" aria-label="지도 표시 설정"><div class="map-zoom"><button id="zoom-in" type="button" aria-label="지도 확대" title="확대" disabled>+</button><button id="zoom-out" type="button" aria-label="지도 축소" title="축소" disabled>−</button></div><div class="boundary-controls"><span>행정경계</span><label><input id="boundary-district" type="checkbox" checked> 시군구</label><label><input id="boundary-town" type="checkbox" checked> 읍면동</label></div><button id="reset-map" title="전국 보기">전국 보기</button></div></div>
+      <section class="result" aria-label="조회 결과"><div class="result-top"><span class="eyebrow">SELECTED LOCATION</span></div>
+        <div class="result-grid"><div id="single-dataset-row" class="result-title"><span id="result-dataset">풍력자원지도</span><span id="result-item" class="result-item"></span></div><div class="value-block"><span id="result-state" class="result-state" role="status"></span><div id="value" class="value">—</div><span id="unit"></span></div><dl><div><dt>선택 위치</dt><dd class="result-location"><p id="region-location" class="region-location" role="status">지역을 선택하세요.</p><p id="coordinates">—</p></dd></div><div id="single-period-row"><dt>기준 기간</dt><dd id="result-period">준비 중</dd></div></dl></div><div id="multi-results" class="multi-results" hidden><table aria-label="선택 데이터 조회 결과"><thead><tr><th scope="col">데이터</th><th scope="col">값</th><th scope="col">단위</th></tr></thead><tbody id="multi-result-rows"></tbody></table></div><p id="result-message" class="result-message" role="status"></p>
+      </section>
+      <footer class="source-footer"><span>출처: KIER · 배경지도: OpenStreetMap · </span><span id="boundary-source"></span> <a id="boundary-source-link" target="_blank" rel="noopener noreferrer">경계 출처·이용 조건</a></footer>
+    </div>
+  </main>
+</body></html>
