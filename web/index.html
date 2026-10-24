@@ -56,9 +56,6 @@
               <button type="submit">검색</button>
             </div>
             <div class="preset-row">
-              <button id="toggle-compare" type="button" class="preset-btn compare-toggle" aria-pressed="false">
-                <span class="compare-dot"></span><span>비교 모드</span>
-              </button>
               <button id="preset-kier" type="button" class="preset-btn preset-a"><span class="slot-badge">A</span>한국에너지기술연구원</button>
               <button id="preset-domion" type="button" class="preset-btn preset-b"><span class="slot-badge slot-b">B</span>도미온 에너지</button>
               <button id="preset-clear-b" type="button" class="preset-btn preset-clear" hidden>비교 해제</button>
@@ -76,10 +73,15 @@
               <p id="region-location" class="region-location" role="status">지도에서 지점을 선택하세요.</p>
               <p id="coordinates">—</p>
             </div>
-            <button id="toggle-dashboard" type="button" class="btn-dashboard" aria-expanded="true" aria-controls="result-body">
-              <span aria-hidden="true" class="dash-icon">▦</span>
-              <span class="dash-label">데이터 접기</span>
-            </button>
+            <div class="head-actions">
+              <button id="toggle-compare" type="button" class="btn-compare" aria-pressed="false" title="KIER와 도미온 두 지점의 값을 나란히 비교">
+                <span class="compare-dot"></span><span class="compare-label">비교 모드</span>
+              </button>
+              <button id="toggle-dashboard" type="button" class="btn-dashboard" aria-expanded="true" aria-controls="result-body">
+                <span aria-hidden="true" class="dash-icon">▦</span>
+                <span class="dash-label">데이터 접기</span>
+              </button>
+            </div>
           </div>
           <div class="result-body" id="result-body">
             <div class="dashboard-period">

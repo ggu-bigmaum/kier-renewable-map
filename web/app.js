@@ -458,42 +458,49 @@ if($('toggle-map-tools')){
     $('toggle-map-tools').setAttribute('aria-pressed',String(hidden));
   });
 }
-// Grid-point overlay: fetch per-dataset grid locations within current bounds and draw as colored dots with 2-line labels
-const gridLayers = new Map();
-let gridGeneration = 0;
-async function refreshGridPoints() {
+// Nearest-grid overlay: for the selected point A (and B), fetch each dataset's nearest grid point from /api/point and draw a colored dot with 2-line label
+const nearestLayers = {A:new Map(), B:new Map()};
+let nearestGeneration = 0;
+async function refreshNearestGridPoints() {
   if (!map || !window.L) return;
-  const b = map.getBounds();
-  const bbox = `${b.getSouth().toFixed(4)},${b.getWest().toFixed(4)},${b.getNorth().toFixed(4)},${b.getEast().toFixed(4)}`;
-  const seq = ++gridGeneration;
-  await Promise.all(catalog.map(async d => {
-    const meta = DATASET_META[d.dataset_id]; if (!meta) return;
-    let data;
-    try { data = await api(`grid_points?dataset=${d.dataset_id}&bbox=${bbox}&limit=400`); }
-    catch { return; }
-    if (seq !== gridGeneration) return;
-    const prev = gridLayers.get(d.dataset_id);
-    if (prev) map.removeLayer(prev);
-    const layer = L.layerGroup();
-    for (const p of data.points || []) {
-      const dot = L.circleMarker([p.lat, p.lon], {radius:5, color:'#fff', weight:1.5, fillColor:meta.color, fillOpacity:0.9, pane:'markerPane'});
-      dot.bindTooltip(d.name_ko, {direction:'top', offset:[0,-4], opacity:0.9});
-      layer.addLayer(dot);
-      if (point) {
-        const km = havKm(point.lat, point.lon, p.lat, p.lon);
-        const distStr = km < 1 ? `${Math.round(km*1000)} m` : `${km.toFixed(2)} km`;
-        const label = L.divIcon({
-          className: 'grid-label',
-          html: `<div class="gl-top" style="background:${meta.color}">${distStr}</div><div class="gl-bot">${meta.res} 격자</div>`,
-          iconSize: [null, null], iconAnchor: [0, -8]
-        });
-        layer.addLayer(L.marker([p.lat, p.lon], {icon:label, interactive:false, keyboard:false}));
-      }
-    }
-    layer.addTo(map);
-    gridLayers.set(d.dataset_id, layer);
-  }));
+  const seq = ++nearestGeneration;
+  for (const slot of ['A','B']) {
+    const pt = slot==='A' ? point : pointB;
+    // Clear old layers for this slot if no point
+    if (!pt) { for (const l of nearestLayers[slot].values()) map.removeLayer(l); nearestLayers[slot].clear(); continue; }
+    await Promise.all(catalog.map(async d => {
+      const meta = DATASET_META[d.dataset_id]; if (!meta) return;
+      const metric = d.metrics?.[0]?.metric || settings(d).metric;
+      const sug = SUGGESTED_PERIOD[d.dataset_id];
+      const params = new URLSearchParams({dataset:d.dataset_id, lat:pt.lat, lon:pt.lon});
+      if (metric) params.set('metric', metric);
+      if (sug) { params.set('from', sug.from); params.set('to', sug.to); }
+      let data;
+      try { data = await api(`point?${params}`); } catch { return; }
+      if (seq !== nearestGeneration) return;
+      const gp = data?.location?.grid_point;
+      const dkm = data?.location?.distance_km;
+      if (!gp) return;
+      const prev = nearestLayers[slot].get(d.dataset_id);
+      if (prev) map.removeLayer(prev);
+      const g = L.layerGroup();
+      const dot = L.circleMarker([gp.lat, gp.lon], {radius:5, color:'#fff', weight:1.5, fillColor:meta.color, fillOpacity:0.9, pane:'markerPane'});
+      dot.bindTooltip(`${slot==='B'?'B · ':'A · '}${d.name_ko}`, {direction:'top', offset:[0,-4], opacity:0.9});
+      g.addLayer(dot);
+      const distStr = typeof dkm==='number' ? (dkm<1?`${Math.round(dkm*1000)} m`:`${dkm.toFixed(2)} km`) : '';
+      const label = L.divIcon({
+        className: 'grid-label',
+        html: `<div class="gl-top" style="background:${meta.color}">${distStr}</div><div class="gl-bot">${meta.res} 격자</div>`,
+        iconSize: [null, null], iconAnchor: [0, -8]
+      });
+      g.addLayer(L.marker([gp.lat, gp.lon], {icon:label, interactive:false, keyboard:false}));
+      g.addTo(map);
+      nearestLayers[slot].set(d.dataset_id, g);
+    }));
+  }
 }
+// Keep old name as alias for existing event wire
+const refreshGridPoints = refreshNearestGridPoints;
 $('toggle-dashboard').addEventListener('click',()=>{
   const result=document.querySelector('.result');
   const collapsed=result.classList.toggle('collapsed');
