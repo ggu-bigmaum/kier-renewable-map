@@ -208,6 +208,7 @@ function choosePoint(lat,lon,label='선택 지점',selectedRegionId=null) {
   if(!validPoint(lat,lon)) return;
   point={lat,lon};
   $('coordinates').textContent=`위도 ${lat.toFixed(6)} · 경도 ${lon.toFixed(6)}`;
+  $('toggle-dashboard').disabled=false;
   if(map) { map.stop();if(marker) marker.setLatLng([lat,lon]); else marker=L.marker([lat,lon]).addTo(map); map.panTo([lat,lon],{animate:false}); }
   clearResult();
   window.KierRegions?.locate(lat,lon,selectedRegionId);
@@ -318,5 +319,12 @@ $('toggle-map-tools').addEventListener('click',()=>{
   const hidden=document.querySelector('.map-wrap').classList.toggle('map-ui-hidden');
   $('toggle-map-tools').textContent=hidden?'지도 메뉴 보이기':'지도 메뉴 숨기기';
   $('toggle-map-tools').setAttribute('aria-pressed',String(hidden));
+});
+$('toggle-dashboard').addEventListener('click',()=>{
+  const result=document.querySelector('.result');
+  const collapsed=result.classList.toggle('collapsed');
+  const btn=$('toggle-dashboard');
+  btn.setAttribute('aria-expanded',String(!collapsed));
+  btn.querySelector('.dash-label').textContent=collapsed?'대시보드 보기':'대시보드 접기';
 });
 selectDataset(selected); initMap(); loadCatalog();
