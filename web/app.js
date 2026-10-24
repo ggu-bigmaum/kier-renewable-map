@@ -21,7 +21,7 @@ const places = [
 ];
 let selected = catalog.find(d=>d.dataset_id==='wind_map'), point = null, map, marker, generation = 0, controller;
 const selectedIds=new Set(catalog.map(d=>d.dataset_id)), datasetSettings=new Map();
-const KIER_HQ = Object.freeze({lat:36.3899, lon:127.3647, zoom:12});
+const KIER_HQ = Object.freeze({lat:36.3899, lon:127.3647, zoom:14});
 const RESOLUTION_INFO = Object.freeze({
   wind_map:'약 6,900 m',
   wind_api:'175개 지점',
@@ -381,3 +381,5 @@ $('toggle-dashboard').addEventListener('click',()=>{
   btn.querySelector('.dash-label').textContent=collapsed?'대시보드 보기':'대시보드 접기';
 });
 selectDataset(selected); initMap(); loadCatalog();
+// Default pin: KIER Daejeon HQ
+choosePoint(KIER_HQ.lat, KIER_HQ.lon, 'KIER 대전 본원');
