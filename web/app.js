@@ -318,8 +318,9 @@ async function search(q) {
     $('search-message').textContent=`${first.label} 선택됨${regions.total>1?` · 다른 결과 ${regions.total-1}건`:''}`;
     return;
   }
-  // 3) Local shortcuts (예: 서울, 대전…) — auto-select first
-  const local=places.filter(p=>p[0].includes(q.trim()));
+  // 3) Local shortcuts (예: 서울, 대전…) — bidirectional partial match
+  const qt=q.trim();
+  const local=places.filter(p=>p[0].includes(qt)||qt.includes(p[0]));
   if(local.length) {
     const [label,lat,lon]=local[0];
     choosePoint(lat,lon,label); map?.setView([lat,lon],11);
