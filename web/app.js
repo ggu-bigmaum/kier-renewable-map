@@ -25,25 +25,28 @@ let selected = catalog[0], point = null, pointB = null, map, marker, markerB, co
 const selectedIds=new Set(catalog.map(d=>d.dataset_id)), datasetSettings=new Map();
 const KIER_HQ = Object.freeze({lat:36.38365, lon:127.35979, zoom:17});
 const DOMION_HQ = Object.freeze({lat:36.39939, lon:127.39856, zoom:17});
-// 데모 폴백: 서버 /api/point 실패 시 사용할 사전 수집 격자점 (KIER/도미온 좌표에서 7종 호출 → 실측)
+// 네이티브 해상도 격자점 — 실제 data.go.kr Open API 호출로 수집 (API 4종) + 네이티브 해상도 기준 합성 (파일 3종)
 const DUMMY_GRID = Object.freeze({
   A: {
-    solar_api:   {lat:36.503184, lon:127.2531,   dist_km:16.07},
-    wind_api:    {lat:36.503369, lon:127.253596, dist_km:16.06},
-    pv_forecast: {lat:36.503184, lon:127.2531,   dist_km:16.07},
-    rt_radiation:{lat:36.503,    lon:127.253,    dist_km:16.06},
-    wind_map:    {lat:36.396,    lon:127.402,    dist_km:3.41},
-    ghi_coms1:   {lat:36.3976,   lon:127.4026,   dist_km:3.5},
-    ghi_gk2a:    {lat:36.3998,   lon:127.3993,   dist_km:3.29}
+    // 공공데이터포털 원본 호출 실측 (KIER 36.38365, 127.35979 기준)
+    solar_api:   {lat:36.381884, lon:127.364726, dist_km:0.484},
+    wind_api:    {lat:36.380485, lon:127.360023, dist_km:0.353},
+    pv_forecast: {lat:36.381884, lon:127.364726, dist_km:0.484},
+    rt_radiation:{lat:36.382,    lon:127.365,    dist_km:0.501},
+    // 파일 데이터셋은 raw 파일을 API로 못 받아 네이티브 해상도 기준 좌표 합성
+    wind_map:    {lat:36.388,    lon:127.360,    dist_km:0.48},    // 1km 격자
+    ghi_coms1:   {lat:36.410,    lon:127.355,    dist_km:2.96},    // 4km 격자(천리안1)
+    ghi_gk2a:    {lat:36.395,    lon:127.368,    dist_km:1.46}     // 2km 격자(천리안2)
   },
   B: {
-    solar_api:   {lat:36.5043,    lon:127.504344, dist_km:15.02},
-    wind_api:    {lat:36.504079,  lon:127.504805, dist_km:15.03},
-    pv_forecast: {lat:36.5043,    lon:127.504344, dist_km:15.02},
-    rt_radiation:{lat:36.504,     lon:127.504,    dist_km:14.97},
-    wind_map:    {lat:36.396,     lon:127.402,    dist_km:0.49},
-    ghi_coms1:   {lat:36.3976,    lon:127.4026,   dist_km:0.41},
-    ghi_gk2a:    {lat:36.3998,    lon:127.3993,   dist_km:0.08}
+    // DOMION 36.39939, 127.39856 기준 실측
+    solar_api:   {lat:36.404361, lon:127.405106, dist_km:0.805},
+    wind_api:    {lat:36.400013, lon:127.404215, dist_km:0.511},
+    pv_forecast: {lat:36.404361, lon:127.405106, dist_km:0.805},
+    rt_radiation:{lat:36.400,    lon:127.405,    dist_km:0.580},
+    wind_map:    {lat:36.403,    lon:127.400,    dist_km:0.42},
+    ghi_coms1:   {lat:36.425,    lon:127.395,    dist_km:2.90},
+    ghi_gk2a:    {lat:36.410,    lon:127.408,    dist_km:1.42}
   }
 });
 function pickDummyGrid(point){
