@@ -14,6 +14,7 @@ const catalog = [
 ].map(([dataset_id,name_ko,kind,id]) => ({dataset_id,name_ko,kind,status:'not_started',metrics:[],periods:[],source_url:`https://www.data.go.kr/${kind==='file'?`data/${id}/fileData.do`:`tcs/dss/selectApiDataDetailView.do?publicDataPk=${id}`}`}));
 const places = [
   ['한국에너지기술연구원',36.38365,127.35979],['KIER',36.38365,127.35979],['에너지기술연구원',36.38365,127.35979],['KIER 본원',36.38365,127.35979],
+  ['도미온 에너지',36.39939,127.39856],['도미온',36.39939,127.39856],['Domion',36.39939,127.39856],
   ['서울',37.5665,126.9780],['대전',36.3504,127.3845],['제주',33.4996,126.5312],
   ['부산',35.1796,129.0756],['대구',35.8714,128.6014],['인천',37.4563,126.7052],
   ['광주',35.1595,126.8526],['울산',35.5384,129.3114],['세종',36.4800,127.2890],
@@ -23,6 +24,7 @@ const places = [
 let selected = catalog[0], point = null, map, marker, generation = 0, controller;
 const selectedIds=new Set(catalog.map(d=>d.dataset_id)), datasetSettings=new Map();
 const KIER_HQ = Object.freeze({lat:36.38365, lon:127.35979, zoom:17});
+const DOMION_HQ = Object.freeze({lat:36.39939, lon:127.39856, zoom:17});
 // 원본(네이티브) 해상도 — 공공데이터포털 KIER 원 API/파일 기준
 const RESOLUTION_INFO = Object.freeze({
   solar_api:   '약 500 m',
@@ -469,6 +471,10 @@ $('toggle-dashboard').addEventListener('click',()=>{
 $('preset-kier')?.addEventListener('click', ()=>{
   choosePoint(KIER_HQ.lat, KIER_HQ.lon, '한국에너지기술연구원');
   map?.setView([KIER_HQ.lat, KIER_HQ.lon], KIER_HQ.zoom);
+});
+$('preset-domion')?.addEventListener('click', ()=>{
+  choosePoint(DOMION_HQ.lat, DOMION_HQ.lon, '도미온 에너지');
+  map?.setView([DOMION_HQ.lat, DOMION_HQ.lon], DOMION_HQ.zoom);
 });
 selectDataset(selected); initMap(); loadCatalog();
 // Default pin: KIER Daejeon HQ + grid overlay
