@@ -25,6 +25,35 @@ let selected = catalog[0], point = null, pointB = null, map, marker, markerB, co
 const selectedIds=new Set(catalog.map(d=>d.dataset_id)), datasetSettings=new Map();
 const KIER_HQ = Object.freeze({lat:36.38365, lon:127.35979, zoom:17});
 const DOMION_HQ = Object.freeze({lat:36.39939, lon:127.39856, zoom:17});
+// 데모 폴백: 서버 /api/point 실패 시 사용할 사전 수집 격자점 (KIER/도미온 좌표에서 7종 호출 → 실측)
+const DUMMY_GRID = Object.freeze({
+  A: {
+    solar_api:   {lat:36.503184, lon:127.2531,   dist_km:16.07},
+    wind_api:    {lat:36.503369, lon:127.253596, dist_km:16.06},
+    pv_forecast: {lat:36.503184, lon:127.2531,   dist_km:16.07},
+    rt_radiation:{lat:36.503,    lon:127.253,    dist_km:16.06},
+    wind_map:    {lat:36.396,    lon:127.402,    dist_km:3.41},
+    ghi_coms1:   {lat:36.3976,   lon:127.4026,   dist_km:3.5},
+    ghi_gk2a:    {lat:36.3998,   lon:127.3993,   dist_km:3.29}
+  },
+  B: {
+    solar_api:   {lat:36.5043,    lon:127.504344, dist_km:15.02},
+    wind_api:    {lat:36.504079,  lon:127.504805, dist_km:15.03},
+    pv_forecast: {lat:36.5043,    lon:127.504344, dist_km:15.02},
+    rt_radiation:{lat:36.504,     lon:127.504,    dist_km:14.97},
+    wind_map:    {lat:36.396,     lon:127.402,    dist_km:0.49},
+    ghi_coms1:   {lat:36.3976,    lon:127.4026,   dist_km:0.41},
+    ghi_gk2a:    {lat:36.3998,    lon:127.3993,   dist_km:0.08}
+  }
+});
+function pickDummyGrid(point){
+  if (!point) return null;
+  const kDist = Math.hypot(point.lat-KIER_HQ.lat, point.lon-KIER_HQ.lon);
+  const dDist = Math.hypot(point.lat-DOMION_HQ.lat, point.lon-DOMION_HQ.lon);
+  if (kDist < 0.01) return DUMMY_GRID.A;
+  if (dDist < 0.01) return DUMMY_GRID.B;
+  return null;
+}
 // 원본(네이티브) 해상도 — 공공데이터포털 KIER 원 API/파일 기준
 const RESOLUTION_INFO = Object.freeze({
   solar_api:   '약 500 m',
@@ -468,6 +497,7 @@ async function refreshNearestGridPoints() {
     const pt = slot==='A' ? point : pointB;
     // Clear old layers for this slot if no point
     if (!pt) { for (const l of nearestLayers[slot].values()) map.removeLayer(l); nearestLayers[slot].clear(); continue; }
+    const dummySet = pickDummyGrid(pt);
     await Promise.all(catalog.map(async d => {
       const meta = DATASET_META[d.dataset_id]; if (!meta) return;
       const metric = d.metrics?.[0]?.metric || settings(d).metric;
@@ -476,10 +506,12 @@ async function refreshNearestGridPoints() {
       if (metric) params.set('metric', metric);
       if (sug) { params.set('from', sug.from); params.set('to', sug.to); }
       let data;
-      try { data = await api(`point?${params}`); } catch { return; }
+      try { data = await api(`point?${params}`); } catch {}
       if (seq !== nearestGeneration) return;
-      const gp = data?.location?.grid_point;
-      const dkm = data?.location?.distance_km;
+      let gp = data?.location?.grid_point;
+      let dkm = data?.location?.distance_km;
+      // Fallback: use pre-collected dummy grid when API unreachable
+      if (!gp && dummySet?.[d.dataset_id]) { gp = dummySet[d.dataset_id]; dkm = dummySet[d.dataset_id].dist_km; }
       if (!gp) return;
       const prev = nearestLayers[slot].get(d.dataset_id);
       if (prev) map.removeLayer(prev);
