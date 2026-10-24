@@ -73,6 +73,7 @@ main{display:block;height:100%;width:100%;position:relative;overflow:hidden;bord
 .multi-results thead th:nth-child(4){width:21%;text-align:right}
 .multi-results thead th:nth-child(5){width:12%;text-align:center}
 .multi-results tbody th{padding:11px 8px;font-size:11px;font-weight:600;color:#203c38;border-bottom:1px solid #eef1ed;text-align:left;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.multi-results tbody th small{display:none}
 .multi-results tbody td{padding:11px 8px;font-size:11px;color:#536d60;border-bottom:1px solid #eef1ed;vertical-align:middle;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .multi-results td.result-number{text-align:right;font-size:13px;color:#205e46;font-weight:700;font-variant-numeric:tabular-nums;white-space:normal}
 .multi-results td.result-number .num{display:block;text-align:right}
