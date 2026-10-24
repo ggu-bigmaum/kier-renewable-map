@@ -139,7 +139,7 @@ function selectDataset(d) {
   if(selectedIds.size)$('filter-dataset').value=d.dataset_id;else $('filter-dataset').add(new Option('데이터를 선택하세요',''));
   $('filter-dataset').disabled=!selectedIds.size;
   $('dataset-filters').hidden=!selectedIds.size;
-  $('map-title').textContent=selectedIds.size>1?'재생에너지 통합조회':selectedIds.size?d.name_ko:'데이터 선택'; $('result-dataset').textContent=d.name_ko;
+  const titleEl=$('map-title'); if(titleEl) titleEl.textContent=selectedIds.size>1?'재생에너지 통합조회':selectedIds.size?d.name_ko:'데이터 선택'; $('result-dataset').textContent=d.name_ko;
   $('metric').replaceChildren();
   const metricFilter=d.display?.filters?.find(f=>f.key==='metric' && f.type==='select');
   const options=Array.isArray(metricFilter?.options)
