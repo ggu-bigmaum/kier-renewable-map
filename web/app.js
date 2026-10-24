@@ -515,6 +515,7 @@ function setPointB(lat, lon){
     map.fitBounds(b, {maxZoom:15});
   }
   $('preset-clear-b').hidden = false;
+  updateCompareToggle();
   renderRows();
 }
 function clearPointB(){
@@ -538,7 +539,23 @@ $('preset-domion')?.addEventListener('click', ()=>{
   if (!point) choosePoint(KIER_HQ.lat, KIER_HQ.lon, '한국에너지기술연구원');
   setPointB(DOMION_HQ.lat, DOMION_HQ.lon);
 });
-$('preset-clear-b')?.addEventListener('click', clearPointB);
+$('preset-clear-b')?.addEventListener('click', ()=>{clearPointB();updateCompareToggle();});
+// 비교 모드 토글: ON → KIER+도미온 둘 다 세팅 / OFF → B 해제
+$('toggle-compare')?.addEventListener('click', ()=>{
+  if (pointB) { clearPointB(); }
+  else {
+    if (!point) choosePoint(KIER_HQ.lat, KIER_HQ.lon, '한국에너지기술연구원');
+    setPointB(DOMION_HQ.lat, DOMION_HQ.lon);
+  }
+  updateCompareToggle();
+});
+function updateCompareToggle(){
+  const btn=$('toggle-compare'); if(!btn) return;
+  const on=!!pointB;
+  btn.setAttribute('aria-pressed', String(on));
+  btn.classList.toggle('active', on);
+  btn.querySelector('span:last-child').textContent = on ? '비교 모드 ON' : '비교 모드';
+}
 selectDataset(selected); initMap(); loadCatalog();
 // Default pin: KIER Daejeon HQ + grid overlay
 choosePoint(KIER_HQ.lat, KIER_HQ.lon, '한국에너지기술연구원');

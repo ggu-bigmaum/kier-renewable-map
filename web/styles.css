@@ -37,6 +37,10 @@ main{display:block;height:100%;width:100%;position:relative;overflow:hidden;bord
 .preset-btn:hover{background:#f4f8f1;border-color:var(--green)}
 .preset-btn.preset-clear{background:#fff;color:#9a4a2b;border-color:#dcc0b0}
 .preset-btn.preset-clear:hover{background:#f8ede6;color:#9a4a2b;border-color:#dcc0b0}
+.compare-toggle{background:#fff;color:#536d60}
+.compare-toggle .compare-dot{width:8px;height:8px;border-radius:50%;background:#c7d2cd;transition:background .2s}
+.compare-toggle.active{background:#f4ede0;color:#8b6a1a;border-color:#dcc080}
+.compare-toggle.active .compare-dot{background:#dc5a1f;box-shadow:0 0 0 3px #dc5a1f30}
 .slot-badge{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:#1e40af;color:#fff;font-size:9px;font-weight:700}
 .slot-badge.slot-b{background:#dc5a1f}
 .marker-b .mb-pin{width:26px;height:34px;background:#dc5a1f;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:grid;place-items:center;color:#fff;font-weight:800;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
