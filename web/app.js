@@ -21,7 +21,7 @@ const places = [
 ];
 let selected = catalog[0], point = null, map, marker, generation = 0, controller;
 const selectedIds=new Set(catalog.map(d=>d.dataset_id)), datasetSettings=new Map();
-const KIER_HQ = Object.freeze({lat:36.3899, lon:127.3647, zoom:14});
+const KIER_HQ = Object.freeze({lat:36.3827, lon:127.3583, zoom:14});
 const RESOLUTION_INFO = Object.freeze({
   wind_map:'약 6,900 m',
   wind_api:'175개 지점',
