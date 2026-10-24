@@ -221,7 +221,6 @@ function choosePoint(lat,lon,label='선택 지점',selectedRegionId=null) {
   if(!validPoint(lat,lon)) return;
   point={lat,lon};
   $('coordinates').textContent=`위도 ${lat.toFixed(6)} · 경도 ${lon.toFixed(6)}`;
-  $('toggle-dashboard').disabled=false;
   if(map) { map.stop();if(marker) marker.setLatLng([lat,lon]); else marker=L.marker([lat,lon]).addTo(map); map.panTo([lat,lon],{animate:false}); }
   clearResult();
   window.KierRegions?.locate(lat,lon,selectedRegionId);
@@ -234,11 +233,11 @@ function initMap() {
   const tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
   tiles.on('tileerror',()=>{$('map-error').hidden=false;});
   map.on('click',e=>choosePoint(e.latlng.lat,e.latlng.lng));
+  // Leaflet bottomleft stacks newer controls on top. Add scale first so it sits below minimap.
   L.control.scale({imperial:false,position:'bottomleft'}).addTo(map);
-  // Minimap (bottom-right so it doesn't overlap scale)
   if(L.Control?.MiniMap){
     const miniLayer=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:13});
-    try{new L.Control.MiniMap(miniLayer,{position:'bottomright',toggleDisplay:true,zoomLevelOffset:-5,width:150,height:120}).addTo(map);}catch{}
+    try{new L.Control.MiniMap(miniLayer,{position:'bottomleft',toggleDisplay:true,zoomLevelOffset:-5,width:150,height:120}).addTo(map);}catch{}
   }
   window.KierRegions?.init(map,choosePoint);
 }
