@@ -117,10 +117,15 @@ function renderRows(results=new Map()){
     if(ready(d)){const item=result?.item||itemLabel(d,config);if(item){const detail=document.createElement('small');detail.textContent=item;name.append(detail);}}
     const resolution=document.createElement('td');resolution.textContent=RESOLUTION_INFO[d.dataset_id]||'—';
     const period=document.createElement('td');period.textContent=PERIOD_INFO[d.dataset_id]||'—';
-    const unit=document.createElement('td');unit.textContent=result?.unit||unitLabel(d.dataset_id,d.metrics?.[0]?.unit||'')||'—';
-    const value=document.createElement('td');value.className='result-number';value.textContent=result?.value??(result?.status?'':'—');
+    const value=document.createElement('td');value.className='result-number';
+    const num=document.createElement('span');num.className='num';num.textContent=result?.value??(result?.status?'':'—');value.append(num);
+    const unitText=result?.unit||unitLabel(d.dataset_id,d.metrics?.[0]?.unit||'');
+    if(unitText && result?.value){const u=document.createElement('small');u.className='unit';u.textContent=' '+unitText;value.append(u);}
     if(result?.status){const status=document.createElement('small');status.className='row-status';status.textContent=result.status;value.append(status);}
-    row.append(name,resolution,period,unit,value);return row;
+    const detail=document.createElement('td');detail.className='td-detail';
+    const link=document.createElement('a');link.href=d.source_url||'#';link.target='_blank';link.rel='noopener noreferrer';link.className='detail-link';link.textContent='상세조회';link.setAttribute('aria-label',`${d.name_ko} 상세조회`);
+    detail.append(link);
+    row.append(name,resolution,period,value,detail);return row;
   }));
 }
 function toggleDataset(d){
@@ -233,11 +238,20 @@ function initMap() {
   const tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
   tiles.on('tileerror',()=>{$('map-error').hidden=false;});
   map.on('click',e=>choosePoint(e.latlng.lat,e.latlng.lng));
-  // Leaflet bottomleft stacks newer controls on top. Add scale first so it sits below minimap.
+  // Leaflet bottomleft stacks newer controls on top. Add in order: cursor coords, scale, minimap
+  // so visual stack from top to bottom = minimap, scale, cursor coords.
+  const CursorCoords=L.Control.extend({
+    options:{position:'bottomleft'},
+    onAdd:function(){const div=L.DomUtil.create('div','leaflet-control cursor-coords-ctrl');div.innerHTML='위도 — · 경도 —';this._el=div;return div;},
+    update:function(latlng){if(latlng)this._el.innerHTML=`위도 ${latlng.lat.toFixed(5)} · 경도 ${latlng.lng.toFixed(5)}`;else this._el.innerHTML='위도 — · 경도 —';}
+  });
+  const cursorCtrl=new CursorCoords().addTo(map);
+  map.on('mousemove',e=>cursorCtrl.update(e.latlng));
+  map.on('mouseout',()=>cursorCtrl.update(null));
   L.control.scale({imperial:false,position:'bottomleft'}).addTo(map);
   if(L.Control?.MiniMap){
     const miniLayer=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:13});
-    try{new L.Control.MiniMap(miniLayer,{position:'bottomleft',toggleDisplay:true,zoomLevelOffset:-5,width:150,height:120}).addTo(map);}catch{}
+    try{new L.Control.MiniMap(miniLayer,{position:'bottomleft',toggleDisplay:true,zoomLevelOffset:-5,width:300,height:240}).addTo(map);}catch{}
   }
   window.KierRegions?.init(map,choosePoint);
 }
