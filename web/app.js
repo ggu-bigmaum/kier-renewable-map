@@ -36,7 +36,7 @@ const RESOLUTION_INFO = Object.freeze({
 // 데모용 더미 값 (KIER 본원 좌표에서 해당 데이터셋 대표월로 서버 호출 → 실측 1회)
 const DUMMY_VALUE = Object.freeze({
   solar_api:   {value:'108.3647', unit:'W/m²'},
-  wind_api:    {value:'0.669',    unit:'배'},
+  wind_api:    {value:'0.669',    unit:''},
   pv_forecast: {value:'1.6273',   unit:'MWh/MWp'},
   rt_radiation:{value:'156.2182', unit:'W/m²'},
   wind_map:    {value:'4.0601',   unit:'m/s'},
