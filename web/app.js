@@ -4,13 +4,13 @@ const $ = id => document.getElementById(id);
 // Local preview uses the existing API. Set the HTML meta value to /api/ behind a production reverse proxy.
 const API_BASE = new URL(document.querySelector('meta[name="kier-api-base"]')?.content || '/api/', document.baseURI);
 const catalog = [
-  ['wind_map','풍력자원지도','file','15071929'],
-  ['wind_api','풍력 시공간 자원정보','api','15125093'],
-  ['ghi_coms1','천리안1호 수평면전일사량','file','15066413'],
-  ['ghi_gk2a','천리안2호 수평면전일사량','file','15066438'],
   ['solar_api','태양에너지 시공간 자원정보','api','15125092'],
+  ['wind_api','풍력 시공간 자원정보','api','15125093'],
   ['pv_forecast','태양광 발전량 예측정보','api','15125094'],
-  ['rt_radiation','실시간 일사량','api','15152096']
+  ['rt_radiation','실시간 일사량','api','15152096'],
+  ['wind_map','풍력자원지도','file','15071929'],
+  ['ghi_coms1','천리안1호 수평면전일사량','file','15066413'],
+  ['ghi_gk2a','천리안2호 수평면전일사량','file','15066438']
 ].map(([dataset_id,name_ko,kind,id]) => ({dataset_id,name_ko,kind,status:'not_started',metrics:[],periods:[],source_url:`https://www.data.go.kr/${kind==='file'?`data/${id}/fileData.do`:`tcs/dss/selectApiDataDetailView.do?publicDataPk=${id}`}`}));
 const places = [
   ['서울',37.5665,126.9780],['대전',36.3504,127.3845],['제주',33.4996,126.5312],
@@ -19,7 +19,7 @@ const places = [
   ['수원',37.2636,127.0286],['춘천',37.8813,127.7298],['청주',36.6424,127.4890],
   ['전주',35.8242,127.1480],['목포',34.8118,126.3922],['포항',36.0190,129.3435]
 ];
-let selected = catalog.find(d=>d.dataset_id==='wind_map'), point = null, map, marker, generation = 0, controller;
+let selected = catalog[0], point = null, map, marker, generation = 0, controller;
 const selectedIds=new Set(catalog.map(d=>d.dataset_id)), datasetSettings=new Map();
 const KIER_HQ = Object.freeze({lat:36.3899, lon:127.3647, zoom:14});
 const RESOLUTION_INFO = Object.freeze({
@@ -32,9 +32,13 @@ const RESOLUTION_INFO = Object.freeze({
   rt_radiation:'161개 관측소'
 });
 const PERIOD_INFO = Object.freeze({
-  wind_map:'2011-01 ~ 12', wind_api:'날짜 구분 없음',
-  ghi_coms1:'2012-01 ~ 2019-12', ghi_gk2a:'2019-09 ~ 2020-08',
-  solar_api:'2021-01 ~ 12', pv_forecast:'2021-01 ~ 12', rt_radiation:'2025-10 ~ 2026-07'
+  solar_api:   '2021-01 ~ 2021-12',
+  wind_api:    '날짜 구분 없음',
+  pv_forecast: '2021-01 ~ 2021-12',
+  rt_radiation:'2025-10 ~ 2026-07',
+  wind_map:    '2011-01 ~ 2011-12',
+  ghi_coms1:   '2012-01 ~ 2019-12',
+  ghi_gk2a:    '2019-09 ~ 2020-08'
 });
 let sharedPeriod=null,lastPeriod=null;
 const singleValue = d => d.display?.value_mode==='single';
