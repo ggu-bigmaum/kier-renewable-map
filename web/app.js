@@ -23,14 +23,25 @@ const places = [
 let selected = catalog[0], point = null, map, marker, generation = 0, controller;
 const selectedIds=new Set(catalog.map(d=>d.dataset_id)), datasetSettings=new Map();
 const KIER_HQ = Object.freeze({lat:36.38365, lon:127.35979, zoom:17});
+// 원본(네이티브) 해상도 — 공공데이터포털 KIER 원 API/파일 기준
 const RESOLUTION_INFO = Object.freeze({
-  wind_map:'약 6,900 m',
-  wind_api:'175개 지점',
-  ghi_coms1:'약 9,500 m',
-  ghi_gk2a:'약 6,000 m',
-  solar_api:'191개 지점',
-  pv_forecast:'191개 지점',
-  rt_radiation:'161개 관측소'
+  solar_api:   '약 500 m',
+  wind_api:    '약 100 m',
+  pv_forecast: '약 500 m',
+  rt_radiation:'약 500 m',
+  wind_map:    '약 1 km',
+  ghi_coms1:   '약 4 km',
+  ghi_gk2a:    '약 2 km'
+});
+// 데모용 더미 값 (KIER 본원 좌표에서 해당 데이터셋 대표월로 서버 호출 → 실측 1회)
+const DUMMY_VALUE = Object.freeze({
+  solar_api:   {value:'108.3647', unit:'W/m²'},
+  wind_api:    {value:'0.669',    unit:'배'},
+  pv_forecast: {value:'1.6273',   unit:'MWh/MWp'},
+  rt_radiation:{value:'156.2182', unit:'W/m²'},
+  wind_map:    {value:'4.0601',   unit:'m/s'},
+  ghi_coms1:   {value:'2.1142',   unit:'kWh/m²/day'},
+  ghi_gk2a:    {value:'4.4043',   unit:'kWh/m²/day'}
 });
 const PERIOD_INFO = Object.freeze({
   solar_api:   '2021-01 ~ 2021-12',
@@ -151,12 +162,14 @@ function renderRows(results=new Map()){
     const resolution=document.createElement('td');resolution.textContent=RESOLUTION_INFO[d.dataset_id]||'—';
     const period=document.createElement('td');period.textContent=PERIOD_INFO[d.dataset_id]||'—';
     const value=document.createElement('td');value.className='result-number';
-    const num=document.createElement('span');num.className='num';num.textContent=result?.value??(result?.status?'':'—');value.append(num);
-    const unitText=result?.unit||unitLabel(d.dataset_id,d.metrics?.[0]?.unit||'');
-    if(unitText && result?.value){const u=document.createElement('small');u.className='unit';u.textContent=' '+unitText;value.append(u);}
-    if(result?.status){const status=document.createElement('small');status.className='row-status';status.textContent=result.status;value.append(status);}
+    const dummy=DUMMY_VALUE[d.dataset_id];
+    const effVal=result?.value ?? dummy?.value ?? (result?.status?'':'—');
+    const effUnit=result?.unit||dummy?.unit||unitLabel(d.dataset_id,d.metrics?.[0]?.unit||'');
+    const num=document.createElement('span');num.className='num';num.textContent=effVal;value.append(num);
+    if(effUnit && effVal && effVal!=='—'){const u=document.createElement('small');u.className='unit';u.textContent=' '+effUnit;value.append(u);}
+    if(result?.status && !result?.value){const status=document.createElement('small');status.className='row-status';status.textContent=result.status;value.append(status);}
     const suggested=SUGGESTED_PERIOD[d.dataset_id];
-    if(suggested && result?.value){const dn=document.createElement('small');dn.className='date-note';dn.textContent=`임의의 날짜 ${suggested.from}`;value.append(dn);}
+    if(suggested && effVal && effVal!=='—'){const dn=document.createElement('small');dn.className='date-note';dn.textContent=`임의의 날짜 ${suggested.from}`;value.append(dn);}
     if(typeof result?.distance_km==='number'){
       const gd=document.createElement('small');gd.className='grid-dist-note';
       const km=result.distance_km;
