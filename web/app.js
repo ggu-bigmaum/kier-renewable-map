@@ -344,6 +344,7 @@ function choosePoint(lat,lon,label='선택 지점',selectedRegionId=null) {
   clearResult();
   window.KierRegions?.locate(lat,lon,selectedRegionId);
   void query();
+  refreshNearestGridPoints();
 }
 function initMap() {
   if(!window.L) { $('map-error').hidden=false; window.KierRegions?.init(null,choosePoint); return; }
@@ -352,10 +353,6 @@ function initMap() {
   const tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
   tiles.on('tileerror',()=>{$('map-error').hidden=false;});
   map.on('click',e=>choosePoint(e.latlng.lat,e.latlng.lng));
-  let gridRefreshTimer=null;
-  const scheduleGridRefresh=()=>{clearTimeout(gridRefreshTimer);gridRefreshTimer=setTimeout(refreshGridPoints,300);};
-  map.on('moveend',scheduleGridRefresh);
-  map.on('zoomend',scheduleGridRefresh);
   // Leaflet bottomleft stacks newer controls on top. Add in order: cursor coords, scale, minimap
   // so visual stack from top to bottom = minimap, scale, cursor coords.
   const CursorCoords=L.Control.extend({
@@ -568,6 +565,7 @@ function setPointB(lat, lon){
   $('preset-clear-b').hidden = false;
   updateCompareToggle();
   renderRows();
+  refreshNearestGridPoints();
 }
 function clearPointB(){
   pointB = null;
@@ -575,6 +573,7 @@ function clearPointB(){
   if (compareLine){ map.removeLayer(compareLine); compareLine = null; }
   $('preset-clear-b').hidden = true;
   renderRows();
+  refreshNearestGridPoints();
 }
 function updateCompareLine(){
   if (!point || !pointB || !map) return;
@@ -608,6 +607,5 @@ function updateCompareToggle(){
   btn.querySelector('span:last-child').textContent = on ? '비교 모드 ON' : '비교 모드';
 }
 selectDataset(selected); initMap(); loadCatalog();
-// Default pin: KIER Daejeon HQ + grid overlay
+// Default pin: KIER Daejeon HQ (choosePoint fires refreshNearestGridPoints internally)
 choosePoint(KIER_HQ.lat, KIER_HQ.lon, '한국에너지기술연구원');
-setTimeout(refreshGridPoints, 500);
