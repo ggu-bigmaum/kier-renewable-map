@@ -20,7 +20,18 @@ const places = [
   ['전주',35.8242,127.1480],['목포',34.8118,126.3922],['포항',36.0190,129.3435]
 ];
 let selected = catalog.find(d=>d.dataset_id==='wind_map'), point = null, map, marker, generation = 0, controller;
-const selectedIds=new Set([selected.dataset_id]), datasetSettings=new Map();
+const selectedIds=new Set(catalog.map(d=>d.dataset_id)), datasetSettings=new Map();
+const KIER_HQ = Object.freeze({lat:36.3899, lon:127.3647, zoom:12});
+const RESOLUTION_INFO = Object.freeze({
+  wind_map:'격자 2,134곳', wind_api:'175곳',
+  ghi_coms1:'격자 1,122곳', ghi_gk2a:'격자 2,784곳',
+  solar_api:'191곳', pv_forecast:'191곳', rt_radiation:'161곳'
+});
+const PERIOD_INFO = Object.freeze({
+  wind_map:'2011-01 ~ 12', wind_api:'날짜 구분 없음',
+  ghi_coms1:'2012-01 ~ 2019-12', ghi_gk2a:'2019-09 ~ 2020-08',
+  solar_api:'2021-01 ~ 12', pv_forecast:'2021-01 ~ 12', rt_radiation:'2025-10 ~ 2026-07'
+});
 let sharedPeriod=null,lastPeriod=null;
 const singleValue = d => d.display?.value_mode==='single';
 const ready = d => ['ready','demo'].includes(d.status) && (singleValue(d) || d.metrics.length > 0);
@@ -104,10 +115,12 @@ function renderRows(results=new Map()){
     const config=effectiveSettings(d),result=results.get(d.dataset_id);
     const name=document.createElement('th');name.scope='row';name.textContent=d.name_ko;
     if(ready(d)){const item=result?.item||itemLabel(d,config);if(item){const detail=document.createElement('small');detail.textContent=item;name.append(detail);}}
+    const resolution=document.createElement('td');resolution.textContent=RESOLUTION_INFO[d.dataset_id]||'—';
+    const period=document.createElement('td');period.textContent=PERIOD_INFO[d.dataset_id]||'—';
+    const unit=document.createElement('td');unit.textContent=result?.unit||unitLabel(d.dataset_id,d.metrics?.[0]?.unit||'')||'—';
     const value=document.createElement('td');value.className='result-number';value.textContent=result?.value??(result?.status?'':'—');
-    const unit=document.createElement('td');unit.textContent=result?.unit||'';
     if(result?.status){const status=document.createElement('small');status.className='row-status';status.textContent=result.status;value.append(status);}
-    row.append(name,value,unit);return row;
+    row.append(name,resolution,period,unit,value);return row;
   }));
 }
 function toggleDataset(d){
@@ -216,14 +229,17 @@ function choosePoint(lat,lon,label='선택 지점',selectedRegionId=null) {
 }
 function initMap() {
   if(!window.L) { $('map-error').hidden=false; window.KierRegions?.init(null,choosePoint); return; }
-  map=L.map('map',{zoomControl:false}).setView([36.2,127.8],7);
+  map=L.map('map',{zoomControl:false}).setView([KIER_HQ.lat,KIER_HQ.lon],KIER_HQ.zoom);
   new ResizeObserver(()=>map.invalidateSize({pan:false})).observe($('map'));
   const tiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
   tiles.on('tileerror',()=>{$('map-error').hidden=false;});
-  const syncZoom=()=>{$('zoom-in').disabled=map.getZoom()>=map.getMaxZoom();$('zoom-out').disabled=map.getZoom()<=map.getMinZoom();};
-  map.on('zoomend',syncZoom);syncZoom();
   map.on('click',e=>choosePoint(e.latlng.lat,e.latlng.lng));
   L.control.scale({imperial:false,position:'bottomleft'}).addTo(map);
+  // Minimap (bottom-right so it doesn't overlap scale)
+  if(L.Control?.MiniMap){
+    const miniLayer=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:13});
+    try{new L.Control.MiniMap(miniLayer,{position:'bottomright',toggleDisplay:true,zoomLevelOffset:-5,width:150,height:120}).addTo(map);}catch{}
+  }
   window.KierRegions?.init(map,choosePoint);
 }
 async function loadCatalog() {
@@ -312,9 +328,11 @@ for(const id of ['period','period-to']) $(id).addEventListener('change',()=>{if(
 $('metric').addEventListener('change',()=>{settings(selected).metric=$('metric').value;updatePeriods();saveSettings();clearResult();void query();});
 $('filter-dataset').addEventListener('change',e=>{saveSettings();selectDataset(catalog.find(d=>d.dataset_id===e.target.value));});
 $('select-all').addEventListener('change',e=>{saveSettings();selectedIds.clear();if(e.target.checked)catalog.forEach(d=>selectedIds.add(d.dataset_id));selectDataset(chosenDatasets().find(d=>d===selected)||chosenDatasets()[0]||selected);});
-$('reset-map').addEventListener('click',()=>map?.setView([36.2,127.8],7));
-$('zoom-in').addEventListener('click',()=>map?.zoomIn());
-$('zoom-out').addEventListener('click',()=>map?.zoomOut());
+const goHome=()=>map?.setView([KIER_HQ.lat,KIER_HQ.lon],KIER_HQ.zoom);
+$('reset-map')?.addEventListener('click',goHome);
+$('map-home-btn')?.addEventListener('click',goHome);
+$('zoom-in')?.addEventListener('click',()=>map?.zoomIn());
+$('zoom-out')?.addEventListener('click',()=>map?.zoomOut());
 if($('toggle-map-tools')){
   $('toggle-map-tools').addEventListener('click',()=>{
     const hidden=document.querySelector('.map-wrap').classList.toggle('map-ui-hidden');
