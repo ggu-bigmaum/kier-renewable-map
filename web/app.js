@@ -40,6 +40,17 @@ const PERIOD_INFO = Object.freeze({
   ghi_coms1:   '2012-01 ~ 2019-12',
   ghi_gk2a:    '2019-09 ~ 2020-08'
 });
+// Demo: show one representative month per dataset (within its available range).
+// The dashboard displays "임의의 날짜 YYYY-MM" below each value so users see the picked date.
+const SUGGESTED_PERIOD = Object.freeze({
+  solar_api:   {from:'2021-06', to:'2021-06'},
+  wind_api:    null,
+  pv_forecast: {from:'2021-06', to:'2021-06'},
+  rt_radiation:{from:'2026-01', to:'2026-01'},
+  wind_map:    {from:'2011-06', to:'2011-06'},
+  ghi_coms1:   {from:'2016-01', to:'2016-01'},
+  ghi_gk2a:    {from:'2020-03', to:'2020-03'}
+});
 let sharedPeriod=null,lastPeriod=null;
 const singleValue = d => d.display?.value_mode==='single';
 const ready = d => ['ready','demo'].includes(d.status) && (singleValue(d) || d.metrics.length > 0);
@@ -109,6 +120,8 @@ function commonPeriod(){
 }
 function effectiveSettings(d){
   const config=settings(d);
+  const suggested=SUGGESTED_PERIOD[d.dataset_id];
+  if(suggested) return {...config, from:suggested.from, to:suggested.to};
   return selectedIds.size>1&&!singleValue(d)?{...config,...commonPeriod()}:config;
 }
 // '제공 항목' text shown in the result card: metric label, or the select filters for single-value datasets.
@@ -130,6 +143,8 @@ function renderRows(results=new Map()){
     const unitText=result?.unit||unitLabel(d.dataset_id,d.metrics?.[0]?.unit||'');
     if(unitText && result?.value){const u=document.createElement('small');u.className='unit';u.textContent=' '+unitText;value.append(u);}
     if(result?.status){const status=document.createElement('small');status.className='row-status';status.textContent=result.status;value.append(status);}
+    const suggested=SUGGESTED_PERIOD[d.dataset_id];
+    if(suggested && result?.value){const dn=document.createElement('small');dn.className='date-note';dn.textContent=`임의의 날짜 ${suggested.from}`;value.append(dn);}
     const detail=document.createElement('td');detail.className='td-detail';
     const link=document.createElement('a');link.href=d.source_url||'#';link.target='_blank';link.rel='noopener noreferrer';link.className='detail-link';link.textContent='상세조회';link.setAttribute('aria-label',`${d.name_ko} 상세조회`);
     detail.append(link);
