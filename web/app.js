@@ -146,6 +146,13 @@ function renderRows(results=new Map()){
     if(result?.status){const status=document.createElement('small');status.className='row-status';status.textContent=result.status;value.append(status);}
     const suggested=SUGGESTED_PERIOD[d.dataset_id];
     if(suggested && result?.value){const dn=document.createElement('small');dn.className='date-note';dn.textContent=`임의의 날짜 ${suggested.from}`;value.append(dn);}
+    if(typeof result?.distance_km==='number'){
+      const gd=document.createElement('small');gd.className='grid-dist-note';
+      const km=result.distance_km;
+      gd.textContent=`대표 격자점 ${km<1?Math.round(km*1000)+' m':km.toFixed(2)+' km'} 거리`;
+      if(result.grid_point) gd.title=`격자점 좌표: ${result.grid_point.lat.toFixed(5)}, ${result.grid_point.lon.toFixed(5)}`;
+      value.append(gd);
+    }
     const detail=document.createElement('td');detail.className='td-detail';
     const link=document.createElement('a');link.href=d.source_url||'#';link.target='_blank';link.rel='noopener noreferrer';link.className='detail-link';link.textContent='상세조회';link.setAttribute('aria-label',`${d.name_ko} 상세조회`);
     detail.append(link);
@@ -369,7 +376,7 @@ async function query() {
         const value=data.value??data.summary?.mean,unit=data.display?.unit||data.unit;
         if(data.status!=='ok'||data.status_label==='준비 중'||typeof value!=='number'||!Number.isFinite(value)||!unit||(!singleValue(d)&&(data.period?.from!==config.from||data.period?.to!==config.to))||!sourceLink(data.source?.url))throw new Error('조회 응답 오류');
         const detail=itemLabel(d,config);
-        result={value:new Intl.NumberFormat('ko-KR',{maximumFractionDigits:4}).format(value),unit:unitLabel(d.dataset_id,unit),period:singleValue(d)?'날짜 구분 없음':`${data.period.from} ~ ${data.period.to}`,item:detail,status:data.status_label==='시연용 예시 데이터'||d.status==='demo'?'시연용 예시 데이터':''};
+        result={value:new Intl.NumberFormat('ko-KR',{maximumFractionDigits:4}).format(value),unit:unitLabel(d.dataset_id,unit),period:singleValue(d)?'날짜 구분 없음':`${data.period.from} ~ ${data.period.to}`,item:detail,distance_km:data.location?.distance_km,grid_point:data.location?.grid_point,status:data.status_label==='시연용 예시 데이터'||d.status==='demo'?'시연용 예시 데이터':''};
       }
     }catch(error){result={status:error.apiMessage||(error.name==='AbortError'?'조회 시간 초과':error.message==='기간 선택 오류'?error.message:'조회 실패')};}
     if(seq!==generation)return;

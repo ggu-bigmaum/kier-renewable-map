@@ -70,6 +70,7 @@ main{display:block;height:100%;width:100%;position:relative;overflow:hidden;bord
 .multi-results tbody small{display:block;margin-top:2px;font-size:10px;color:var(--muted);font-weight:400}
 .multi-results .row-status{color:#936b28;font-size:11px}
 .multi-results .date-note{display:block;margin-top:2px;font-size:9px;color:#8b9890;font-weight:400;text-align:right}
+.multi-results .grid-dist-note{display:block;margin-top:1px;font-size:9px;color:#9a8b4e;font-weight:400;text-align:right;cursor:help}
 .dashboard-period{display:none}
 
 .result-message{margin:10px 0 0;font-size:10px;color:#7d8d80;line-height:1.6}
