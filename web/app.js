@@ -463,7 +463,7 @@ $('toggle-dashboard').addEventListener('click',()=>{
   const collapsed=result.classList.toggle('collapsed');
   const btn=$('toggle-dashboard');
   btn.setAttribute('aria-expanded',String(!collapsed));
-  btn.querySelector('.dash-label').textContent=collapsed?'대시보드 보기':'대시보드 접기';
+  btn.querySelector('.dash-label').textContent=collapsed?'데이터 보기':'데이터 접기';
 });
 // KIER preset button: jump to KIER HQ
 $('preset-kier')?.addEventListener('click', ()=>{
