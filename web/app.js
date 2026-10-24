@@ -21,7 +21,7 @@ const places = [
   ['수원',37.2636,127.0286],['춘천',37.8813,127.7298],['청주',36.6424,127.4890],
   ['전주',35.8242,127.1480],['목포',34.8118,126.3922],['포항',36.0190,129.3435]
 ];
-let selected = catalog[0], point = null, map, marker, generation = 0, controller;
+let selected = catalog[0], point = null, pointB = null, map, marker, markerB, compareLine, generation = 0, controller;
 const selectedIds=new Set(catalog.map(d=>d.dataset_id)), datasetSettings=new Map();
 const KIER_HQ = Object.freeze({lat:36.38365, lon:127.35979, zoom:17});
 const DOMION_HQ = Object.freeze({lat:36.39939, lon:127.39856, zoom:17});
@@ -35,12 +35,22 @@ const RESOLUTION_INFO = Object.freeze({
   ghi_coms1:   '약 4 km',
   ghi_gk2a:    '약 2 km'
 });
-// 데모용 더미 값 (KIER 본원 좌표에서 해당 데이터셋 대표월로 서버 호출 → 실측 1회)
+// 데모용 더미 값 — KIER 본원(지점 A)
 const DUMMY_VALUE = Object.freeze({
   solar_api:   {value:'108.3647', unit:'W/m²'},
   wind_api:    {value:'0.669',    unit:''},
   pv_forecast: {value:'1.6273',   unit:'MWh/MWp'},
   rt_radiation:{value:'156.2182', unit:'W/m²'},
+  wind_map:    {value:'4.0601',   unit:'m/s'},
+  ghi_coms1:   {value:'2.1142',   unit:'kWh/m²/day'},
+  ghi_gk2a:    {value:'4.4043',   unit:'kWh/m²/day'}
+});
+// 데모용 더미 값 — 도미온 에너지(지점 B) · 같은 쿼리로 실측 1회
+const DUMMY_VALUE_B = Object.freeze({
+  solar_api:   {value:'117.8375', unit:'W/m²'},
+  wind_api:    {value:'0.669',    unit:''},
+  pv_forecast: {value:'1.8004',   unit:'MWh/MWp'},
+  rt_radiation:{value:'123.7636', unit:'W/m²'},
   wind_map:    {value:'4.0601',   unit:'m/s'},
   ghi_coms1:   {value:'2.1142',   unit:'kWh/m²/day'},
   ghi_gk2a:    {value:'4.4043',   unit:'kWh/m²/day'}
@@ -156,26 +166,50 @@ function itemLabel(d,config){
   return option?.label||config.metric||'';
 }
 function renderRows(results=new Map()){
+  const compareOn = !!pointB;
+  document.querySelector('.multi-results')?.classList.toggle('compare-on', compareOn);
+  document.querySelector('.result')?.classList.toggle('compare-wide', compareOn);
   $('multi-result-rows').replaceChildren(...chosenDatasets().map(d=>{
     const row=document.createElement('tr');row.dataset.dataset=d.dataset_id;
-    const config=effectiveSettings(d),result=results.get(d.dataset_id);
+    const result=results.get(d.dataset_id);
     const name=document.createElement('th');name.scope='row';name.textContent=d.name_ko;
-    if(ready(d)){const item=result?.item||itemLabel(d,config);if(item){const detail=document.createElement('small');detail.textContent=item;name.append(detail);}}
     const resolution=document.createElement('td');resolution.textContent=RESOLUTION_INFO[d.dataset_id]||'—';
     const period=document.createElement('td');period.textContent=PERIOD_INFO[d.dataset_id]||'—';
-    const value=document.createElement('td');value.className='result-number';
-    const dummy=DUMMY_VALUE[d.dataset_id];
-    const effVal=result?.value ?? dummy?.value ?? '—';
-    const effUnit=result?.unit||dummy?.unit||unitLabel(d.dataset_id,d.metrics?.[0]?.unit||'');
-    const num=document.createElement('span');num.className='num';num.textContent=effVal;value.append(num);
-    if(effUnit && effVal && effVal!=='—'){const u=document.createElement('small');u.className='unit';u.textContent=effUnit;value.append(u);}
+    // Value cell(s)
+    const dummyA=DUMMY_VALUE[d.dataset_id];
+    const effValA=result?.value ?? dummyA?.value ?? '—';
+    const effUnit=result?.unit||dummyA?.unit||unitLabel(d.dataset_id,d.metrics?.[0]?.unit||'');
+    const makeValCell=(val,unit,slot)=>{
+      const td=document.createElement('td');td.className='result-number';if(slot)td.classList.add('slot-'+slot);
+      const n=document.createElement('span');n.className='num';n.textContent=val;td.append(n);
+      if(unit && val && val!=='—'){const u=document.createElement('small');u.className='unit';u.textContent=unit;td.append(u);}
+      return td;
+    };
+    const valA=makeValCell(effValA,effUnit,'a');
+    row.append(name,resolution,period,valA);
+    if(compareOn){
+      const dummyB=DUMMY_VALUE_B[d.dataset_id];
+      const effValB=dummyB?.value ?? '—';
+      const valB=makeValCell(effValB,effUnit,'b');
+      row.append(valB);
+      const diffTd=document.createElement('td');diffTd.className='diff-cell';
+      const a=parseFloat(effValA), b=parseFloat(effValB);
+      if(Number.isFinite(a)&&Number.isFinite(b)&&a!==0){
+        const pct=((b-a)/Math.abs(a))*100;
+        const span=document.createElement('span');
+        span.className='diff '+(pct>0.1?'pos':pct<-0.1?'neg':'eq');
+        span.textContent=(pct>0?'+':'')+pct.toFixed(1)+'%';
+        diffTd.append(span);
+      } else diffTd.textContent='—';
+      row.append(diffTd);
+    }
     const detail=document.createElement('td');detail.className='td-detail';
     const link=document.createElement('a');
     link.href=d.source_url||'#';link.target='_blank';link.rel='noopener noreferrer';link.className='detail-link';link.textContent='API 소개';
     link.title='공공데이터포털에서 이 API 소개 페이지 열기';
     link.setAttribute('aria-label',`${d.name_ko} API 소개 페이지`);
     detail.append(link);
-    row.append(name,resolution,period,value,detail);return row;
+    row.append(detail);return row;
   }));
 }
 function toggleDataset(d){
@@ -467,15 +501,44 @@ $('toggle-dashboard').addEventListener('click',()=>{
   btn.setAttribute('aria-expanded',String(!collapsed));
   btn.querySelector('.dash-label').textContent=collapsed?'데이터 보기':'데이터 접기';
 });
-// KIER preset button: jump to KIER HQ
+// Preset buttons — A: 지점 A로 설정, B: 지점 B로 설정(비교 모드)
+function setPointB(lat, lon){
+  pointB = {lat, lon};
+  if (map){
+    if (markerB) markerB.setLatLng([lat, lon]);
+    else {
+      const bIcon = L.divIcon({className:'marker-b', html:'<div class="mb-pin">B</div>', iconSize:[26,34], iconAnchor:[13,34]});
+      markerB = L.marker([lat, lon], {icon:bIcon, zIndexOffset:900}).addTo(map);
+    }
+    updateCompareLine();
+    const b = L.latLngBounds([[point.lat, point.lon],[lat, lon]]).pad(0.4);
+    map.fitBounds(b, {maxZoom:15});
+  }
+  $('preset-clear-b').hidden = false;
+  renderRows();
+}
+function clearPointB(){
+  pointB = null;
+  if (markerB){ map.removeLayer(markerB); markerB = null; }
+  if (compareLine){ map.removeLayer(compareLine); compareLine = null; }
+  $('preset-clear-b').hidden = true;
+  renderRows();
+}
+function updateCompareLine(){
+  if (!point || !pointB || !map) return;
+  if (compareLine) map.removeLayer(compareLine);
+  compareLine = L.polyline([[point.lat, point.lon],[pointB.lat, pointB.lon]], {color:'#dc5a1f', weight:3, opacity:0.75}).addTo(map);
+}
 $('preset-kier')?.addEventListener('click', ()=>{
   choosePoint(KIER_HQ.lat, KIER_HQ.lon, '한국에너지기술연구원');
-  map?.setView([KIER_HQ.lat, KIER_HQ.lon], KIER_HQ.zoom);
+  updateCompareLine();
+  if (!pointB) map?.setView([KIER_HQ.lat, KIER_HQ.lon], KIER_HQ.zoom);
 });
 $('preset-domion')?.addEventListener('click', ()=>{
-  choosePoint(DOMION_HQ.lat, DOMION_HQ.lon, '도미온 에너지');
-  map?.setView([DOMION_HQ.lat, DOMION_HQ.lon], DOMION_HQ.zoom);
+  if (!point) choosePoint(KIER_HQ.lat, KIER_HQ.lon, '한국에너지기술연구원');
+  setPointB(DOMION_HQ.lat, DOMION_HQ.lon);
 });
+$('preset-clear-b')?.addEventListener('click', clearPointB);
 selectDataset(selected); initMap(); loadCatalog();
 // Default pin: KIER Daejeon HQ + grid overlay
 choosePoint(KIER_HQ.lat, KIER_HQ.lon, '한국에너지기술연구원');
