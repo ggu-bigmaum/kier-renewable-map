@@ -166,7 +166,7 @@ function renderRows(results=new Map()){
     const effVal=result?.value ?? dummy?.value ?? '—';
     const effUnit=result?.unit||dummy?.unit||unitLabel(d.dataset_id,d.metrics?.[0]?.unit||'');
     const num=document.createElement('span');num.className='num';num.textContent=effVal;value.append(num);
-    if(effUnit && effVal && effVal!=='—'){const u=document.createElement('small');u.className='unit';u.textContent=' '+effUnit;value.append(u);}
+    if(effUnit && effVal && effVal!=='—'){const u=document.createElement('small');u.className='unit';u.textContent=effUnit;value.append(u);}
     const detail=document.createElement('td');detail.className='td-detail';
     const link=document.createElement('a');
     link.href=d.source_url||'#';link.target='_blank';link.rel='noopener noreferrer';link.className='detail-link';link.textContent='API 소개';
