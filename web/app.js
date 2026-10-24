@@ -338,6 +338,7 @@ function updatePeriods() {
 function choosePoint(lat,lon,label='선택 지점',selectedRegionId=null) {
   if(!validPoint(lat,lon)) return;
   point={lat,lon};
+  markAutoFitPending();
   $('coordinates').textContent=`위도 ${lat.toFixed(6)} · 경도 ${lon.toFixed(6)}`;
   if(map) { map.stop();if(marker) marker.setLatLng([lat,lon]); else marker=L.marker([lat,lon]).addTo(map); map.panTo([lat,lon],{animate:false}); }
   clearResult();
@@ -490,13 +491,16 @@ if($('toggle-map-tools')){
 // Nearest-grid overlay: for the selected point A (and B), fetch each dataset's nearest grid point from /api/point and draw a colored dot with 2-line label
 const nearestLayers = {A:new Map(), B:new Map()};
 let nearestGeneration = 0;
+let nearestAutoFit = true;  // on first render after a new selection, fit map to include all dots
 async function refreshNearestGridPoints() {
   if (!map || !window.L) return;
   const seq = ++nearestGeneration;
+  const collected = [];
   for (const slot of ['A','B']) {
     const pt = slot==='A' ? point : pointB;
     // Clear old layers for this slot if no point
     if (!pt) { for (const l of nearestLayers[slot].values()) map.removeLayer(l); nearestLayers[slot].clear(); continue; }
+    collected.push([pt.lat, pt.lon]);
     const dummySet = pickDummyGrid(pt);
     await Promise.all(catalog.map(async d => {
       const meta = DATASET_META[d.dataset_id]; if (!meta) return;
@@ -528,9 +532,16 @@ async function refreshNearestGridPoints() {
       g.addLayer(L.marker([gp.lat, gp.lon], {icon:label, interactive:false, keyboard:false}));
       g.addTo(map);
       nearestLayers[slot].set(d.dataset_id, g);
+      collected.push([gp.lat, gp.lon]);
     }));
   }
+  if (nearestAutoFit && collected.length >= 2) {
+    try { map.fitBounds(L.latLngBounds(collected).pad(0.15), {maxZoom:13}); } catch {}
+    nearestAutoFit = false;  // only auto-fit once per selection
+  }
 }
+// Reset auto-fit when a new point is chosen (via choosePoint or setPointB)
+function markAutoFitPending(){ nearestAutoFit = true; }
 // Keep old name as alias for existing event wire
 const refreshGridPoints = refreshNearestGridPoints;
 $('toggle-dashboard').addEventListener('click',()=>{
@@ -543,6 +554,7 @@ $('toggle-dashboard').addEventListener('click',()=>{
 // Preset buttons — A: 지점 A로 설정, B: 지점 B로 설정(비교 모드)
 function setPointB(lat, lon){
   pointB = {lat, lon};
+  markAutoFitPending();
   if (map){
     if (markerB) markerB.setLatLng([lat, lon]);
     else {
