@@ -369,7 +369,7 @@ function initMap() {
   L.control.scale({imperial:false,position:'bottomleft'}).addTo(map);
   if(L.Control?.MiniMap){
     const miniLayer=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:13});
-    try{new L.Control.MiniMap(miniLayer,{position:'bottomleft',toggleDisplay:true,zoomLevelOffset:-5,width:300,height:240}).addTo(map);}catch{}
+    try{new L.Control.MiniMap(miniLayer,{position:'bottomleft',toggleDisplay:true,zoomLevelFixed:10,width:170,height:140,aimingRectOptions:{color:'#dc5a1f',weight:2,fillOpacity:0.08}}).addTo(map);}catch{}
   }
   window.KierRegions?.init(map,choosePoint);
 }
@@ -504,18 +504,24 @@ async function refreshNearestGridPoints() {
     const dummySet = pickDummyGrid(pt);
     await Promise.all(catalog.map(async d => {
       const meta = DATASET_META[d.dataset_id]; if (!meta) return;
-      const metric = d.metrics?.[0]?.metric || settings(d).metric;
-      const sug = SUGGESTED_PERIOD[d.dataset_id];
-      const params = new URLSearchParams({dataset:d.dataset_id, lat:pt.lat, lon:pt.lon});
-      if (metric) params.set('metric', metric);
-      if (sug) { params.set('from', sug.from); params.set('to', sug.to); }
-      let data;
-      try { data = await api(`point?${params}`); } catch {}
+      let gp, dkm;
+      // Known preset points: use pre-collected dummy immediately (no network wait)
+      if (dummySet?.[d.dataset_id]) {
+        gp = dummySet[d.dataset_id];
+        dkm = dummySet[d.dataset_id].dist_km;
+      } else {
+        const metric = d.metrics?.[0]?.metric || settings(d).metric;
+        const sug = SUGGESTED_PERIOD[d.dataset_id];
+        const params = new URLSearchParams({dataset:d.dataset_id, lat:pt.lat, lon:pt.lon});
+        if (metric) params.set('metric', metric);
+        if (sug) { params.set('from', sug.from); params.set('to', sug.to); }
+        let data;
+        try { data = await api(`point?${params}`); } catch {}
+        if (seq !== nearestGeneration) return;
+        gp = data?.location?.grid_point;
+        dkm = data?.location?.distance_km;
+      }
       if (seq !== nearestGeneration) return;
-      let gp = data?.location?.grid_point;
-      let dkm = data?.location?.distance_km;
-      // Fallback: use pre-collected dummy grid when API unreachable
-      if (!gp && dummySet?.[d.dataset_id]) { gp = dummySet[d.dataset_id]; dkm = dummySet[d.dataset_id].dist_km; }
       if (!gp) return;
       const prev = nearestLayers[slot].get(d.dataset_id);
       if (prev) map.removeLayer(prev);
@@ -584,18 +590,15 @@ function updateCompareLine(){
   compareLine = L.polyline([[point.lat, point.lon],[pointB.lat, pointB.lon]], {color:'#dc5a1f', weight:3, opacity:0.75}).addTo(map);
 }
 // Preset location buttons: single-point switch (compare mode is a separate toggle)
-$('preset-kier')?.addEventListener('click', ()=>{
+function switchTo(lat, lon, label){
   if (pointB) clearPointB();
-  choosePoint(KIER_HQ.lat, KIER_HQ.lon, '한국에너지기술연구원');
-  map?.setView([KIER_HQ.lat, KIER_HQ.lon], KIER_HQ.zoom);
+  // Clear all existing nearest-grid layers so new ones aren't layered on top of old
+  for (const slot of ['A','B']) { for (const l of nearestLayers[slot].values()) map?.removeLayer(l); nearestLayers[slot].clear(); }
+  choosePoint(lat, lon, label);
   updateCompareToggle();
-});
-$('preset-domion')?.addEventListener('click', ()=>{
-  if (pointB) clearPointB();
-  choosePoint(DOMION_HQ.lat, DOMION_HQ.lon, '도미온 에너지');
-  map?.setView([DOMION_HQ.lat, DOMION_HQ.lon], DOMION_HQ.zoom);
-  updateCompareToggle();
-});
+}
+$('preset-kier')?.addEventListener('click', ()=>switchTo(KIER_HQ.lat, KIER_HQ.lon, '한국에너지기술연구원'));
+$('preset-domion')?.addEventListener('click', ()=>switchTo(DOMION_HQ.lat, DOMION_HQ.lon, '도미온 에너지'));
 // 비교 모드 토글: ON → KIER+도미온 둘 다 세팅 / OFF → B 해제
 $('toggle-compare')?.addEventListener('click', ()=>{
   if (pointB) { clearPointB(); }
