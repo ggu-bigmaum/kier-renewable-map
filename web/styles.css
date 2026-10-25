@@ -73,7 +73,7 @@ main{display:block;height:100%;width:100%;position:relative;overflow:hidden;bord
 .head-actions{grid-column:2;align-self:center}
 .result-head-main .eyebrow{display:block;font-size:10px;color:#7b8d84;letter-spacing:1.4px;margin:0 0 8px;font-weight:700}
 .result-head-main #region-location{font-size:13px;font-weight:600;color:#203c38;margin:0 0 4px;line-height:1.4;overflow-wrap:break-word;word-break:keep-all}
-.result-head-main #coordinates{font-size:11px;color:#657b71;margin:0;line-height:1.5}
+.result-head-main #coordinates{font-size:11px;color:#657b71;margin:0;line-height:1.5;white-space:nowrap}
 .btn-dashboard{display:inline-flex;align-items:center;gap:6px;background:var(--green);color:#fff;border:0;border-radius:8px;padding:9px 11px;font-size:11px;font-weight:600;white-space:nowrap;flex-shrink:0}
 .btn-dashboard:disabled{background:#c7d2cd;color:#fff;opacity:1;cursor:not-allowed}
 .btn-dashboard .dash-icon{font-size:13px;line-height:1}
