@@ -57,6 +57,14 @@ function pickDummyGrid(point){
   if (dDist < 0.01) return DUMMY_GRID.B;
   return null;
 }
+function pickDummyValue(point){
+  if (!point) return null;
+  const kDist = Math.hypot(point.lat-KIER_HQ.lat, point.lon-KIER_HQ.lon);
+  const dDist = Math.hypot(point.lat-DOMION_HQ.lat, point.lon-DOMION_HQ.lon);
+  if (kDist < 0.01) return DUMMY_VALUE;
+  if (dDist < 0.01) return DUMMY_VALUE_B;
+  return null;
+}
 // 원본(네이티브) 해상도 — 공공데이터포털 KIER 원 API/파일 기준
 const RESOLUTION_INFO = Object.freeze({
   solar_api:   '약 500 m',
@@ -207,8 +215,9 @@ function renderRows(results=new Map()){
     const name=document.createElement('th');name.scope='row';name.textContent=d.name_ko;
     const resolution=document.createElement('td');resolution.textContent=RESOLUTION_INFO[d.dataset_id]||'—';
     const period=document.createElement('td');period.textContent=PERIOD_INFO[d.dataset_id]||'—';
-    // Value cell(s)
-    const dummyA=DUMMY_VALUE[d.dataset_id];
+    // Value cell(s) — pick dummy set by whichever point is active (KIER or 도미온)
+    const dummyAll=pickDummyValue(point)||DUMMY_VALUE;
+    const dummyA=dummyAll[d.dataset_id];
     const effValA=result?.value ?? dummyA?.value ?? '—';
     const effUnit=result?.unit||dummyA?.unit||unitLabel(d.dataset_id,d.metrics?.[0]?.unit||'');
     const makeValCell=(val,unit,slot)=>{
@@ -220,7 +229,8 @@ function renderRows(results=new Map()){
     const valA=makeValCell(effValA,effUnit,'a');
     row.append(name,resolution,period,valA);
     if(compareOn){
-      const dummyB=DUMMY_VALUE_B[d.dataset_id];
+      const dummyBAll=pickDummyValue(pointB)||DUMMY_VALUE_B;
+      const dummyB=dummyBAll[d.dataset_id];
       const effValB=dummyB?.value ?? '—';
       const valB=makeValCell(effValB,effUnit,'b');
       row.append(valB);
