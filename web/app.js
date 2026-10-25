@@ -586,15 +586,17 @@ function updateCompareLine(){
   compareLine = L.polyline([[point.lat, point.lon],[pointB.lat, pointB.lon]], {color:'#dc5a1f', weight:3, opacity:0.75}).addTo(map);
 }
 // Preset location buttons: single-point switch (compare mode is a separate toggle)
-function switchTo(lat, lon, label){
+function switchTo(lat, lon, label, zoom){
   if (pointB) clearPointB();
   // Clear all existing nearest-grid layers so new ones aren't layered on top of old
   for (const slot of ['A','B']) { for (const l of nearestLayers[slot].values()) map?.removeLayer(l); nearestLayers[slot].clear(); }
   choosePoint(lat, lon, label);
+  // Reset to default close-up (50m / zoom 17) regardless of user's prior zoom
+  if (map && typeof zoom==='number') map.setView([lat, lon], zoom, {animate:true, duration:0.4});
   updateCompareToggle();
 }
-$('preset-kier')?.addEventListener('click', ()=>switchTo(KIER_HQ.lat, KIER_HQ.lon, '한국에너지기술연구원'));
-$('preset-domion')?.addEventListener('click', ()=>switchTo(DOMION_HQ.lat, DOMION_HQ.lon, '도미온 에너지'));
+$('preset-kier')?.addEventListener('click', ()=>switchTo(KIER_HQ.lat, KIER_HQ.lon, '한국에너지기술연구원', KIER_HQ.zoom));
+$('preset-domion')?.addEventListener('click', ()=>switchTo(DOMION_HQ.lat, DOMION_HQ.lon, '도미온 에너지', DOMION_HQ.zoom));
 // 비교 모드 토글: ON → KIER+도미온 둘 다 세팅 / OFF → B 해제
 $('toggle-compare')?.addEventListener('click', ()=>{
   if (pointB) { clearPointB(); }
@@ -609,7 +611,7 @@ function updateCompareToggle(){
   const on=!!pointB;
   btn.setAttribute('aria-pressed', String(on));
   btn.classList.toggle('active', on);
-  btn.querySelector('span:last-child').textContent = on ? '비교 모드 ON' : '비교 모드';
+  btn.querySelector('span:last-child').textContent = on ? '두 지점 비교 ON' : '두 지점 비교';
 }
 selectDataset(selected); initMap(); loadCatalog();
 // Default pin: KIER Daejeon HQ (choosePoint fires refreshNearestGridPoints internally)
