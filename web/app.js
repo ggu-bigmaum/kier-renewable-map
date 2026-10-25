@@ -567,7 +567,6 @@ function setPointB(lat, lon){
     const b = L.latLngBounds([[point.lat, point.lon],[lat, lon]]).pad(0.4);
     map.fitBounds(b, {maxZoom:15});
   }
-  $('preset-clear-b').hidden = false;
   updateCompareToggle();
   renderRows();
   refreshNearestGridPoints();
@@ -576,7 +575,6 @@ function clearPointB(){
   pointB = null;
   if (markerB){ map.removeLayer(markerB); markerB = null; }
   if (compareLine){ map.removeLayer(compareLine); compareLine = null; }
-  $('preset-clear-b').hidden = true;
   renderRows();
   refreshNearestGridPoints();
 }
@@ -585,16 +583,19 @@ function updateCompareLine(){
   if (compareLine) map.removeLayer(compareLine);
   compareLine = L.polyline([[point.lat, point.lon],[pointB.lat, pointB.lon]], {color:'#dc5a1f', weight:3, opacity:0.75}).addTo(map);
 }
+// Preset location buttons: single-point switch (compare mode is a separate toggle)
 $('preset-kier')?.addEventListener('click', ()=>{
+  if (pointB) clearPointB();
   choosePoint(KIER_HQ.lat, KIER_HQ.lon, '한국에너지기술연구원');
-  updateCompareLine();
-  if (!pointB) map?.setView([KIER_HQ.lat, KIER_HQ.lon], KIER_HQ.zoom);
+  map?.setView([KIER_HQ.lat, KIER_HQ.lon], KIER_HQ.zoom);
+  updateCompareToggle();
 });
 $('preset-domion')?.addEventListener('click', ()=>{
-  if (!point) choosePoint(KIER_HQ.lat, KIER_HQ.lon, '한국에너지기술연구원');
-  setPointB(DOMION_HQ.lat, DOMION_HQ.lon);
+  if (pointB) clearPointB();
+  choosePoint(DOMION_HQ.lat, DOMION_HQ.lon, '도미온 에너지');
+  map?.setView([DOMION_HQ.lat, DOMION_HQ.lon], DOMION_HQ.zoom);
+  updateCompareToggle();
 });
-$('preset-clear-b')?.addEventListener('click', ()=>{clearPointB();updateCompareToggle();});
 // 비교 모드 토글: ON → KIER+도미온 둘 다 세팅 / OFF → B 해제
 $('toggle-compare')?.addEventListener('click', ()=>{
   if (pointB) { clearPointB(); }
