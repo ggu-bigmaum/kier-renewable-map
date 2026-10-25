@@ -520,13 +520,15 @@ async function refreshNearestGridPoints() {
       const prev = nearestLayers[slot].get(d.dataset_id);
       if (prev) map.removeLayer(prev);
       const g = L.layerGroup();
+      // dashed connector line from selected point to this grid point
+      g.addLayer(L.polyline([[pt.lat,pt.lon],[gp.lat,gp.lon]], {color:meta.color, weight:1.5, opacity:0.8, dashArray:'4 4', interactive:false}));
       const dot = L.circleMarker([gp.lat, gp.lon], {radius:5, color:'#fff', weight:1.5, fillColor:meta.color, fillOpacity:0.9, pane:'markerPane'});
       dot.bindTooltip(`${slot==='B'?'B · ':'A · '}${d.name_ko}`, {direction:'top', offset:[0,-4], opacity:0.9});
       g.addLayer(dot);
       const distStr = typeof dkm==='number' ? (dkm<1?`${Math.round(dkm*1000)} m`:`${dkm.toFixed(2)} km`) : '';
       const label = L.divIcon({
         className: 'grid-label',
-        html: `<div class="gl-top" style="background:${meta.color}">${distStr}</div><div class="gl-bot">${meta.res} 격자</div>`,
+        html: `<div class="gl-name" style="background:${meta.color}">${d.name_ko}</div><div class="gl-dist">${distStr}</div>`,
         iconSize: [null, null], iconAnchor: [0, -8]
       });
       g.addLayer(L.marker([gp.lat, gp.lon], {icon:label, interactive:false, keyboard:false}));
