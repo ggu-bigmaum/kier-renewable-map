@@ -65,6 +65,13 @@ function pickDummyValue(point){
   if (dDist < 0.01) return DUMMY_VALUE_B;
   return null;
 }
+function pointName(pt){
+  if (!pt) return '';
+  if (Math.hypot(pt.lat-KIER_HQ.lat, pt.lon-KIER_HQ.lon) < 0.01) return 'KIER';
+  if (Math.hypot(pt.lat-DOMION_HQ.lat, pt.lon-DOMION_HQ.lon) < 0.01) return '도미온';
+  return '선택 지점';
+}
+function isDomion(pt){ return pt && Math.hypot(pt.lat-DOMION_HQ.lat, pt.lon-DOMION_HQ.lon) < 0.01; }
 // 원본(네이티브) 해상도 — 공공데이터포털 KIER 원 API/파일 기준
 const RESOLUTION_INFO = Object.freeze({
   solar_api:   '약 500 m',
@@ -209,6 +216,11 @@ function renderRows(results=new Map()){
   const compareOn = !!pointB;
   document.querySelector('.multi-results')?.classList.toggle('compare-on', compareOn);
   document.querySelector('.result')?.classList.toggle('compare-wide', compareOn);
+  // Dynamic column headers: primary = current point name, secondary = other point name
+  const thA = document.querySelector('.multi-results thead .th-val-a');
+  const thB = document.querySelector('.multi-results thead .th-val-b');
+  if (thA) thA.textContent = `${pointName(point)||'A'} 값(더미)`;
+  if (thB) thB.textContent = `${pointName(pointB)||'B'} 값(더미)`;
   $('multi-result-rows').replaceChildren(...chosenDatasets().map(d=>{
     const row=document.createElement('tr');row.dataset.dataset=d.dataset_id;
     const result=results.get(d.dataset_id);
@@ -607,12 +619,13 @@ function switchTo(lat, lon, label, zoom){
 }
 $('preset-kier')?.addEventListener('click', ()=>switchTo(KIER_HQ.lat, KIER_HQ.lon, '한국에너지기술연구원', KIER_HQ.zoom));
 $('preset-domion')?.addEventListener('click', ()=>switchTo(DOMION_HQ.lat, DOMION_HQ.lon, '도미온 에너지', DOMION_HQ.zoom));
-// 비교 모드 토글: ON → KIER+도미온 둘 다 세팅 / OFF → B 해제
+// 두 지점 비교 토글: ON → 현재 지점은 그대로, 다른 지점을 B로 추가 / OFF → B 해제
 $('toggle-compare')?.addEventListener('click', ()=>{
   if (pointB) { clearPointB(); }
   else {
     if (!point) choosePoint(KIER_HQ.lat, KIER_HQ.lon, '한국에너지기술연구원');
-    setPointB(DOMION_HQ.lat, DOMION_HQ.lon);
+    const other = isDomion(point) ? KIER_HQ : DOMION_HQ;
+    setPointB(other.lat, other.lon);
   }
   updateCompareToggle();
 });
