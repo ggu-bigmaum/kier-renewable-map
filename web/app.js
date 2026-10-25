@@ -543,13 +543,9 @@ async function refreshNearestGridPoints() {
       collected.push([gp.lat, gp.lon]);
     }));
   }
-  if (nearestAutoFit && collected.length >= 2) {
-    try { map.fitBounds(L.latLngBounds(collected).pad(0.15), {maxZoom:13}); } catch {}
-    nearestAutoFit = false;  // only auto-fit once per selection
-  }
+  // auto-fit disabled: keep user's zoom (default 50m at zoom 17)
 }
-// Reset auto-fit when a new point is chosen (via choosePoint or setPointB)
-function markAutoFitPending(){ nearestAutoFit = true; }
+function markAutoFitPending(){ /* no-op: auto-fit removed */ }
 // Keep old name as alias for existing event wire
 const refreshGridPoints = refreshNearestGridPoints;
 $('toggle-dashboard').addEventListener('click',()=>{
